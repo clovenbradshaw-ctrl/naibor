@@ -1,0 +1,12 @@
+# Environment variables (contains passwords/secrets)
+.env
+
+# n8n data
+n8n_data/
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
