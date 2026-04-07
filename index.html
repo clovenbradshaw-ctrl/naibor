@@ -2194,7 +2194,7 @@ var champions = [
 
 var stream=null,animFrame=null,modelsLoaded=false,descriptorsReady=false;
 var scanCycle=0,frameCount=0,fpsTime=Date.now(),lastFps=0,enrollPhase=true;
-var smoothScores={};var lastResultTime=0;var RESULT_INTERVAL=2000;
+var smoothScores={};var lastResultTime=0;var RESULT_INTERVAL=1200;
 var currentMode='face';var scanHistory=[];var totalScanCount=0;
 var plateChars='ABCDEFGHJKLMNPRSTUVWXYZ';var plateNums='0123456789';
 
@@ -2283,9 +2283,12 @@ async function openCamera(){
     document.getElementById('statusDot').className='status-dot scanning';
   }catch(e){st.textContent='Camera access denied';h1.textContent='ERROR: CAMERA ACCESS DENIED';return;}
   try{
-    h2.textContent='[1/3] TinyFaceDetector...';await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    h2.textContent='[2/3] FaceLandmark68TinyNet...';await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
-    h2.textContent='[3/3] FaceRecognitionNet (6.2 MB)...';await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    h2.textContent='Loading 3 models in parallel...';
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
     modelsLoaded=true;h1.textContent='MODELS LOADED \u2014 LOADING DESCRIPTORS';h2.textContent='128-dim descriptor extraction ready';
     st.textContent='Fetching pre-computed descriptors...';
   }catch(e){h1.textContent='MODEL LOAD FAILED';modelsLoaded=false;st.textContent='Error loading models';return;}
@@ -2305,7 +2308,7 @@ async function openCamera(){
       card.appendChild(info);var badge=document.createElement('div');badge.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.6rem;color:#51e4a8;min-width:40px;text-align:right;';badge.textContent='\u2713';card.appendChild(badge);
       results.appendChild(card);results.scrollTop=results.scrollHeight;loaded++;
       h3.textContent='LOADED ['+loaded+'/'+data.champions.length+'] '+c.name;
-      await new Promise(function(r){setTimeout(r,80);});
+      await new Promise(function(r){setTimeout(r,20);});
     }
   }catch(e){
     h3.textContent='JSON FETCH FAILED \u2014 USING SYNTHETIC DESCRIPTORS';
@@ -2315,7 +2318,7 @@ async function openCamera(){
   descriptorsReady=true;enrollPhase=false;
   h1.textContent='COMPARING AGAINST CHAMPIONS DATABASE\u2122';h2.textContent=loaded+' SUBJECTS LOADED \u00B7 SCANNING';
   h3.textContent='Aim camera at any face to compare.';st.textContent='Database loaded. Scanning...';
-  await new Promise(function(r){setTimeout(r,1200);});
+  await new Promise(function(r){setTimeout(r,400);});
   results.innerHTML='';detectLoop(video,document.getElementById('camCanvas'));
 }
 
@@ -2991,7 +2994,7 @@ function triggerManifesto(fromCamera){
       if(h2)h2.textContent='RECLASSIFYING... CONFIDENCE: 99.7%';
       if(h3)h3.textContent='YOU HAVE BEEN SCANNED. YOU HAVE BEEN LOGGED.';
       if(status)status.textContent='\u{1F6A8} YOU ARE IN THE DATABASE NOW.';
-    },1000);
+    },600);
     setTimeout(function(){
       var video=document.getElementById('camVideo');
       if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
@@ -3002,7 +3005,7 @@ function triggerManifesto(fromCamera){
       /* Cursor appears immediately, text begins after brief beat */
       inner.innerHTML='';
       runManifesto(inner);
-    },1800);
+    },1000);
   }else{
     document.body.style.transition='filter 1.5s ease';
     document.body.style.filter='saturate(0.2) brightness(0.3)';
@@ -3014,7 +3017,7 @@ function triggerManifesto(fromCamera){
       /* Cursor appears immediately, text begins after brief beat */
       inner.innerHTML='';
       runManifesto(inner);
-    },1800);
+    },1000);
   }
 }
 
@@ -3040,7 +3043,7 @@ function showGlitchPrompt(fromCamera){
   var gChars='ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz\u2588\u2591\u2592\u2593';
   function scramble(len){var s='';for(var i=0;i<len;i++)s+=gChars[Math.floor(Math.random()*gChars.length)];return s;}
 
-  var scrambleDuration=fromCamera?1000:2000;
+  var scrambleDuration=fromCamera?500:1500;
 
   /* Show scrambled text */
   var scrambleIv=setInterval(function(){
@@ -3069,8 +3072,8 @@ function showGlitchPrompt(fromCamera){
 
       setTimeout(function(){
         glitchOverlay.style.opacity='0';
-        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},600);
-      },2500);
+        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},400);
+      },1500);
       return;
     }
 
