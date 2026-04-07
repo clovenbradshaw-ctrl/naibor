@@ -2994,7 +2994,7 @@ function triggerManifesto(fromCamera){
       if(h2)h2.textContent='RECLASSIFYING... CONFIDENCE: 99.7%';
       if(h3)h3.textContent='YOU HAVE BEEN SCANNED. YOU HAVE BEEN LOGGED.';
       if(status)status.textContent='\u{1F6A8} YOU ARE IN THE DATABASE NOW.';
-    },600);
+    },400);
     setTimeout(function(){
       var video=document.getElementById('camVideo');
       if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
@@ -3002,10 +3002,9 @@ function triggerManifesto(fromCamera){
       overlay.style.display='flex';
       document.body.style.filter='';
       document.body.style.overflow='hidden';
-      /* Cursor appears immediately, text begins after brief beat */
       inner.innerHTML='';
       runManifesto(inner);
-    },1000);
+    },700);
   }else{
     document.body.style.transition='filter 1.5s ease';
     document.body.style.filter='saturate(0.2) brightness(0.3)';
@@ -3072,8 +3071,8 @@ function showGlitchPrompt(fromCamera){
 
       setTimeout(function(){
         glitchOverlay.style.opacity='0';
-        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},400);
-      },1500);
+        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},300);
+      },800);
       return;
     }
 
