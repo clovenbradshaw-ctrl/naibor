@@ -2582,9 +2582,29 @@ function runManifesto(container){
   var mPaused=false,mPendingNext=null,mActiveIntervals=[],mActiveTimeouts=[];
   var overlay=document.getElementById('manifestoOverlay');
 
-  /* ── Click to pause / resume ── */
+  /* ── Click/tap to pause / resume ── */
+  var touchStartY=null,touchStartTime=0;
+  overlay.addEventListener('touchstart',function(e){
+    touchStartY=e.touches[0].clientY;touchStartTime=Date.now();
+  },{passive:true});
+  overlay.addEventListener('touchend',function(e){
+    if(touchStartY===null)return;
+    var dy=Math.abs(e.changedTouches[0].clientY-touchStartY);
+    var dt=Date.now()-touchStartTime;
+    touchStartY=null;
+    /* Only toggle if it was a tap (short, no scroll) */
+    if(dy>10||dt>300)return;
+    var t=e.target;
+    if(t.tagName==='A'||t.tagName==='BUTTON'||t.closest('button')||t.closest('a'))return;
+    togglePause();
+  },{passive:true});
   overlay.addEventListener('click',function(e){
+    /* Desktop click — skip on touch devices (touchend handles it) */
+    if(e.sourceCapabilities&&e.sourceCapabilities.firesTouchEvents)return;
     if(e.target.tagName==='A'||e.target.tagName==='BUTTON'||e.target.closest('button')||e.target.closest('a'))return;
+    togglePause();
+  });
+  function togglePause(){
     mPaused=!mPaused;
     if(mPaused){
       overlay.classList.add('mf-paused');
@@ -2599,7 +2619,7 @@ function runManifesto(container){
       /* Resume: re-trigger next step */
       if(mPendingNext){var fn=mPendingNext;mPendingNext=null;fn();}
     }
-  });
+  }
 
   container.addEventListener('scroll',function(){
     var atBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
