@@ -1254,82 +1254,258 @@
   .mf-code{color:#c8c0b0;font-size:0.68rem;}
   .mf-cursor{display:inline-block;width:0.52em;height:1em;background:#c8c0b0;vertical-align:text-bottom;animation:mBlink 0.6s step-end infinite;margin-left:1px;}
   @keyframes mBlink{0%,100%{opacity:1;}50%{opacity:0;}}
-  @media(max-width:600px){.mf-line{font-size:0.75rem;}}
+  /* ── RESPONSIVE — MOBILE FIRST ── */
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 768px) {
-    nav { padding: 0.6rem 1rem; }
+  /* ── Small phones (up to 480px) ── */
+  @media (max-width: 480px) {
+    nav { padding: 0.5rem 0.8rem; }
     .nav-links { display: none; }
-    .hero { padding: 6rem 1.2rem 3rem; }
-    .hero h1 { font-size: 1.8rem; }
-    .hero-sub { font-size: 1rem; }
-    .hero-actions { flex-direction: column; align-items: center; }
+    .logo { font-size: 1.3rem; }
+    .logo .icon { width: 28px; height: 28px; font-size: 0.9rem; }
+
+    .hero { padding: 5rem 1rem 2.5rem; }
+    .hero h1 { font-size: 2rem; line-height: 1.15; }
+    .hero-sub { font-size: 1.05rem; line-height: 1.7; }
+    .hero-pill { font-size: 0.75rem; padding: 0.35rem 1rem 0.35rem 0.5rem; }
+    .hero-actions { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+    .hero-actions .btn { justify-content: center; font-size: 1rem; padding: 0.85rem 1.5rem; }
     .trust-row { flex-wrap: wrap; justify-content: center; }
-    .steps { grid-template-columns: 1fr; }
-    .features { grid-template-columns: 1fr; }
-    .ah-grid { grid-template-columns: 1fr; }
-    .pricing { grid-template-columns: 1fr; }
-    .data-banner { padding: 1.5rem 1rem; }
-    .data-sources { gap: 0.5rem; }
-    .data-src { font-size: 0.72rem; padding: 0.5rem 0.8rem; }
+
+    .data-banner { padding: 1.5rem 0.8rem; }
+    .data-banner p { font-size: 0.75rem; }
+    .data-sources { gap: 0.4rem; }
+    .data-src { font-size: 0.78rem; padding: 0.55rem 0.9rem; }
+
+    section { padding: 2.5rem 1rem; }
+    .section-eyebrow { font-size: 0.7rem; }
+    .section-title { font-size: 1.6rem; }
+    .section-sub { font-size: 1rem; }
+
+    .steps { grid-template-columns: 1fr; gap: 1rem; margin-top: 2rem; }
+    .step { padding: 1.8rem 1.5rem; }
+    .step-bubble { width: 52px; height: 52px; font-size: 1.5rem; }
+    .step h3 { font-size: 1.1rem; }
+    .step p { font-size: 0.92rem; line-height: 1.65; }
+
     .feed-wrapper { margin-top: 1.5rem; }
     .feed-bar { padding: 0.8rem 1rem; }
-    .feed-bar-left { font-size: 0.8rem; }
-    .feed-row { padding: 0.7rem 1rem; gap: 0.6rem; }
-    .feed-text { font-size: 0.8rem; }
-    .feed-time { min-width: 52px; font-size: 0.65rem; }
-    .feed-tag { font-size: 0.55rem; min-width: 34px; padding: 3px 6px; }
-    .feed-badge { font-size: 0.6rem; padding: 3px 8px; }
-    section { padding: 3rem 1.2rem; }
-    .section-eyebrow { font-size: 0.65rem; }
-    .section-title { font-size: 1.5rem; }
-    .section-sub { font-size: 0.95rem; }
+    .feed-bar-left { font-size: 0.85rem; }
+    .feed-bar-right { font-size: 0.7rem; }
+    .feed-row { padding: 0.7rem 0.8rem; gap: 0.5rem; flex-wrap: wrap; }
+    .feed-text { font-size: 0.88rem; flex-basis: 100%; order: 3; }
+    .feed-time { min-width: auto; font-size: 0.72rem; }
+    .feed-tag { font-size: 0.65rem; padding: 3px 8px; }
+    .feed-badge { font-size: 0.68rem; padding: 4px 10px; }
+
+    .features { grid-template-columns: 1fr; gap: 1rem; margin-top: 2rem; }
+    .feat { padding: 1.8rem 1.5rem; }
+    .feat-icon { width: 48px; height: 48px; font-size: 1.4rem; }
+    .feat h3 { font-size: 1.15rem; }
+    .feat p { font-size: 0.95rem; line-height: 1.7; }
+    .feat .fine { font-size: 0.7rem; line-height: 1.7; }
+
+    .comp-product .comp-name { font-size: 0.88rem; }
+    .comp-product p { font-size: 0.85rem; }
+    .comp-product .comp-source { font-size: 0.65rem; }
+    .comp-verdict { font-size: 0.9rem; padding: 1rem; }
+    .comp-link { font-size: 0.72rem; }
+
     .after-hours { padding: 1.5rem 1.2rem; }
-    .champs-section { padding: 2rem 1rem; }
-    .champs-toolbar { padding: 0.6rem 0.8rem; }
-    .champs-toolbar-left { font-size: 0.72rem; }
-    .champs-toolbar-right { font-size: 0.58rem; }
-    .champs-footer { flex-direction: column; gap: 0.5rem; padding: 0.6rem 0.8rem; }
-    .champs-footer-left { font-size: 0.65rem; }
-    .champ-card { width: calc(50% - 1px); padding: 1.2rem 0.8rem; }
-    .champ-card img { width: 72px; height: 72px; }
-    .champ-name { font-size: 0.85rem; }
-    .champ-role { font-size: 0.65rem; }
-    .champ-note { font-size: 0.62rem; }
-    .feat { padding: 1.5rem; }
-    .feat h3 { font-size: 1rem; }
-    .feat p { font-size: 0.85rem; }
-    .feat .fine { font-size: 0.6rem; }
-    .segments { grid-template-columns: 1fr; }
-    .segment { padding: 1.5rem; }
-    .map-section { padding: 3rem 1.2rem; }
-    .map-container { height: 350px; }
-    .map-overlay-cta h3 { font-size: 1.1rem; }
-    .map-overlay-cta p { font-size: 0.85rem; }
-    .signup-form { flex-direction: column; }
-    .signup-input { min-width: 0; width: 100%; }
-    .rug-modal { padding: 1.5rem; max-height: 90vh; }
-    .rug-modal h2 { font-size: 1.2rem; }
-    .rug-case strong { font-size: 0.8rem; }
-    .rug-case p { font-size: 0.78rem; }
-    .watched-section { padding: 1.5rem 1.2rem; }
-    .watched-tip p { font-size: 0.85rem; }
-    .faq-q { font-size: 0.95rem; padding: 1.2rem 1.2rem; }
-    .faq-a { padding: 0 1.2rem 1.2rem; }
-    .faq-a p { font-size: 0.88rem; }
-    .price-card { padding: 1.5rem; }
-    .price-amount { font-size: 2.2rem; }
-    .price-list li { font-size: 0.82rem; }
-    .price-fine { font-size: 0.56rem; }
-    footer { flex-direction: column; padding: 2rem 1.2rem; }
-    .footer-bottom p { font-size: 0.68rem; }
+    .after-hours::after { font-size: 2rem; top: 1rem; right: 1rem; }
+    .ah-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+    .ah-card { padding: 1.2rem; }
+    .ah-card h4 { font-size: 1rem; }
+    .ah-card p { font-size: 0.88rem; }
+    .age-pill { font-size: 0.75rem; }
+
+    .pricing { grid-template-columns: 1fr; gap: 1.2rem; margin-top: 2rem; }
+    .price-card { padding: 2rem 1.5rem; }
+    .price-tier { font-size: 0.72rem; }
+    .price-amount { font-size: 2.8rem; }
+    .price-amount .per { font-size: 0.95rem; }
+    .price-desc { font-size: 0.92rem; }
+    .price-list li { font-size: 0.92rem; padding: 0.5rem 0; }
+    .price-fine { font-size: 0.68rem; line-height: 1.7; }
+
+    .champs-section { padding: 2.5rem 1rem; }
+    .champs-toolbar { padding: 0.7rem 1rem; }
+    .champs-toolbar-left { font-size: 0.8rem; }
+    .champs-toolbar-right { font-size: 0.65rem; }
+    .champs-grid { justify-content: stretch; }
+    .champ-card { width: 50%; padding: 1.2rem 0.8rem; }
+    .champ-card img { width: 80px; height: 80px; }
+    .champ-name { font-size: 0.95rem; }
+    .champ-role { font-size: 0.72rem; }
+    .champ-note { font-size: 0.72rem; }
+    .champs-footer { flex-direction: column; gap: 0.5rem; padding: 0.7rem 1rem; }
+    .champs-footer-left { font-size: 0.72rem; }
+    .champs-footer-right { font-size: 0.65rem; }
+
+    .segments { grid-template-columns: 1fr; gap: 1rem; }
+    .segment { padding: 1.8rem 1.5rem; }
+    .segment-emoji { font-size: 2.2rem; }
+    .segment h3 { font-size: 1.15rem; }
+    .segment p { font-size: 0.95rem; }
+    .segment .segment-quote { font-size: 0.9rem; padding: 0.8rem 1rem; }
+    .segment .segment-source { font-size: 0.65rem; }
+
+    .watched-section { padding: 1.8rem 1.2rem; }
+    .watched-section::after { font-size: 2rem; bottom: 1rem; right: 1rem; }
+    .watched-tip p { font-size: 0.95rem; }
+    .watched-tip .tip-num { font-size: 0.72rem; }
+    .watched-tip.final p { font-size: 1rem; }
+    .watched-credit { font-size: 0.68rem; }
+
+    .map-section { padding: 2.5rem 1rem; }
+    .map-container { height: 300px; }
+    .map-overlay-cta { padding: 1.5rem; }
+    .map-overlay-cta h3 { font-size: 1.2rem; }
+    .map-overlay-cta p { font-size: 0.92rem; }
+    .map-lock-icon { font-size: 2.2rem; }
+    .signup-form { flex-direction: column; max-width: 100%; }
+    .signup-input { min-width: 0; width: 100%; font-size: 1rem; padding: 0.8rem 1rem; }
+    .signup-form .btn { width: 100%; justify-content: center; font-size: 1rem; }
+
+    .faq-list { margin-top: 2rem; }
+    .faq-item { margin-bottom: 0.8rem; }
+    .faq-q { font-size: 1rem; padding: 1.2rem 1rem; gap: 0.5rem; }
+    .faq-q .emoji { font-size: 1.2rem; }
+    .faq-a { padding: 0 1rem 1.2rem; }
+    .faq-a p { font-size: 0.95rem; line-height: 1.75; }
+    .faq-a .legal-note { font-size: 0.72rem; padding: 0.8rem; }
+
+    .bottom-cta { padding: 3rem 1rem; }
+    .bottom-cta h2 { font-size: 1.8rem; }
+    .bottom-cta p { font-size: 1rem; }
+    .bottom-cta .btn { font-size: 1rem; padding: 0.85rem 2rem; }
+
+    footer { flex-direction: column; padding: 2rem 1rem; gap: 1.5rem; }
+    .footer-brand { max-width: 100%; }
+    .footer-brand p { font-size: 0.85rem; }
+    .footer-links h4 { font-size: 0.75rem; }
+    .footer-links a { font-size: 0.9rem; padding: 0.3rem 0; }
+    .footer-bottom { flex-direction: column; }
+    .footer-bottom p { font-size: 0.78rem; }
+    .footer-bottom .satire-tag { font-size: 0.72rem; }
+
+    .rug-overlay { padding: 1rem; }
+    .rug-modal { padding: 1.8rem 1.5rem; max-height: 92vh; border-radius: 16px; }
+    .rug-icon { font-size: 2.2rem; }
+    .rug-modal h2 { font-size: 1.3rem; }
+    .rug-modal .rug-sub { font-size: 0.95rem; }
+    .rug-case { padding: 0.8rem 1rem; }
+    .rug-case strong { font-size: 0.88rem; }
+    .rug-case p { font-size: 0.85rem; }
+    .rug-case .source { font-size: 0.65rem; }
+    .rug-footer { font-size: 0.85rem; }
+
     .cam-container { width: 95vw; }
     .cam-results { width: 95vw; }
-    .cam-tab { font-size: 0.62rem; padding: 0.45rem 0.9rem; }
-    .cam-account-badge { font-size: 0.52rem; }
-    .bottom-cta { padding: 3rem 1.2rem; }
-    .bottom-cta h2 { font-size: 1.5rem; }
-    .bottom-cta p { font-size: 0.9rem; }
+    .cam-tab { font-size: 0.72rem; padding: 0.5rem 1rem; }
+    .cam-account-badge { font-size: 0.62rem; }
+    .cam-try-section h2 { font-size: 1.4rem; }
+    .cam-try-section p { font-size: 0.95rem; }
+    .cam-disclaimer { font-size: 0.65rem; }
+    .cam-prompt { font-size: 0.9rem; }
+    .cam-match-name { font-size: 0.8rem; }
+    .cam-match-role { font-size: 0.6rem; }
+
+    .plate-scan-btn { font-size: 1rem; }
+    .scan-history-header { font-size: 0.8rem; }
+    .scan-entry { font-size: 0.82rem; }
+    .scan-entry-plate { font-size: 0.75rem; }
+
+    /* Manifesto — much larger on mobile */
+    .mf-line { font-size: 0.95rem !important; line-height: 2.1 !important; }
+    .mf-code { font-size: 0.78rem !important; }
+    .mf-dim { color: #c8c0b070; }
+    #manifestoInner { padding: 2rem 1rem 3rem !important; width: 98% !important; }
+
+    /* Camera try section */
+    .cam-try-section { padding: 2.5rem 1rem; }
+
+    /* Data source badges wrap nicely */
+    .data-sources { justify-content: center; }
+
+    /* Rug pull action button */
+    .rug-action { font-size: 1rem; padding: 0.85rem 1.8rem; }
+  }
+
+  /* ── Tablets & small laptops (481px to 768px) ── */
+  @media (min-width: 481px) and (max-width: 768px) {
+    nav { padding: 0.6rem 1.2rem; }
+    .nav-links { display: none; }
+
+    .hero { padding: 6rem 1.5rem 3rem; }
+    .hero h1 { font-size: 2.4rem; }
+    .hero-sub { font-size: 1.1rem; }
+    .hero-actions { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .trust-row { flex-wrap: wrap; justify-content: center; }
+
+    section { padding: 3.5rem 1.5rem; }
+    .section-title { font-size: 1.8rem; }
+    .section-sub { font-size: 1rem; }
+
+    .steps { grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .step { padding: 1.8rem 1.5rem; }
+    .step h3 { font-size: 1.05rem; }
+    .step p { font-size: 0.9rem; }
+
+    .features { grid-template-columns: 1fr; gap: 1.2rem; }
+    .feat { padding: 1.8rem; }
+    .feat h3 { font-size: 1.1rem; }
+    .feat p { font-size: 0.92rem; }
+    .feat .fine { font-size: 0.68rem; }
+
+    .ah-grid { grid-template-columns: 1fr 1fr; }
+    .pricing { grid-template-columns: 1fr; gap: 1.2rem; }
+    .price-card { padding: 2rem; }
+    .price-amount { font-size: 2.6rem; }
+    .price-list li { font-size: 0.88rem; }
+
+    .segments { grid-template-columns: 1fr 1fr; }
+    .segment { padding: 1.8rem; }
+
+    .champs-section { padding: 3rem 1.5rem; }
+    .champ-card { width: calc(33.33% - 1px); }
+
+    .map-section { padding: 3rem 1.5rem; }
+    .map-container { height: 350px; }
+    .signup-form { flex-direction: column; }
+    .signup-input { min-width: 0; width: 100%; }
+
+    .faq-q { font-size: 1rem; padding: 1.3rem 1.5rem; }
+    .faq-a { padding: 0 1.5rem 1.3rem; }
+    .faq-a p { font-size: 0.92rem; }
+
+    .bottom-cta { padding: 3.5rem 1.5rem; }
+    .bottom-cta h2 { font-size: 2rem; }
+
+    footer { flex-direction: column; padding: 2rem 1.5rem; }
+    .footer-bottom p { font-size: 0.75rem; }
+
+    .rug-modal { padding: 2rem; }
+    .rug-modal h2 { font-size: 1.35rem; }
+    .rug-case strong { font-size: 0.85rem; }
+    .rug-case p { font-size: 0.82rem; }
+
+    .cam-container { width: 90vw; }
+    .cam-results { width: 90vw; }
+
+    /* Manifesto */
+    .mf-line { font-size: 0.88rem; line-height: 1.9; }
+
+    .data-banner { padding: 1.5rem 1rem; }
+    .data-src { font-size: 0.78rem; }
+
+    .feed-row { padding: 0.7rem 1rem; gap: 0.7rem; }
+    .feed-text { font-size: 0.85rem; }
+    .feed-badge { font-size: 0.65rem; }
+
+    .after-hours { padding: 2rem 1.5rem; }
+    .watched-section { padding: 2rem 1.5rem; }
+
+    .champs-footer { flex-direction: column; gap: 0.5rem; }
   }
   /* Location glitch cycling */
   .loc-glitch { transition: opacity 0.15s; }
@@ -1845,7 +2021,7 @@
 
 <!-- MANIFESTO OVERLAY -->
 <div id="manifestoOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a08;z-index:100000;justify-content:center;align-items:center;">
-  <div id="manifestoInner" style="max-width:680px;width:92%;max-height:100vh;overflow-y:auto;padding:2.5rem 1rem 4rem;scrollbar-width:none;-ms-overflow-style:none;"></div>
+  <div id="manifestoInner" style="max-width:680px;width:96%;max-height:100vh;overflow-y:auto;padding:2.5rem 1rem 4rem;scrollbar-width:none;-ms-overflow-style:none;"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -2051,6 +2227,8 @@ function finalizePlateScan(plate,btn){
   else{statusText.textContent='No match. Plate '+plate+' logged.';h3.textContent=scanHistory.length+' PLATES IN SESSION LOG';}
   document.getElementById('statusDot').className='status-dot scanning';
   btn.disabled=false;btn.textContent='\u{1F4F7} SCAN PLATE';
+  /* After 4 plate scans, trigger the glitch prompt */
+  if(totalScanCount>=4 && !manifestoFired && !glitchPromptShown){showGlitchPrompt(true);}
 }
 
 function seedDescriptor(name){var d=new Float32Array(128),h=5381;for(var i=0;i<name.length;i++)h=((h<<5)+h+name.charCodeAt(i))|0;for(var i=0;i<128;i++){h=((h<<13)^h)|0;h=(h*1597+i*71)|0;d[i]=((h&0xFFFF)/65535-0.5)*0.3;}return d;}
@@ -2147,7 +2325,7 @@ async function detectLoop(video,canvas){
       /* First detection: flash "NEIGHBOR" before correcting to "SUBJECT" */
       if(scanCycle===1){var h1g=document.getElementById('hudLine1');h1g.textContent='NEIGHBOR IDENTIFIED';h1g.style.color='#51e4a8';setTimeout(function(){h1g.textContent='SUBJECT NOT IN DATABASE';h1g.style.color='#51e4a8';setTimeout(function(){h1g.style.color='';h1g.textContent='COMPARING AGAINST CHAMPIONS DATABASE\u2122';},1200);},150);}
       if(scanCycle===2){document.getElementById('hudLine2').textContent='Still scanning. Still comparing. Still logging.';}
-      showMatches(desc);if(scanCycle===3 && !manifestoFired){triggerManifesto(true);}}
+      showMatches(desc);if(scanCycle===3 && !manifestoFired && !glitchPromptShown){showGlitchPrompt(true);}}
   }else{
     document.getElementById('statusDot').className='status-dot scanning';
     document.getElementById('statusText').textContent='Scanning for faces...';
@@ -2660,7 +2838,7 @@ function runManifesto(container){
               /* Phase 11: THE CHOICE — two equal buttons */
               var choiceWrap=document.createElement('div');choiceWrap.style.cssText='text-align:center;margin-top:2.5rem;opacity:0;transition:opacity 1.5s ease;';
 
-              var btnStyle='display:block;width:280px;margin:0 auto 1rem;font-family:IBM Plex Mono,monospace;font-size:0.82rem;padding:0.7rem 1.5rem;cursor:pointer;text-decoration:none;border:1px solid;transition:background 0.3s,color 0.3s,border-color 0.3s;text-align:center;';
+              var btnStyle='display:block;width:340px;max-width:90vw;margin:0 auto 1rem;font-family:IBM Plex Mono,monospace;font-size:0.82rem;padding:0.7rem 1.5rem;cursor:pointer;text-decoration:none;border:1px solid;transition:background 0.3s,color 0.3s,border-color 0.3s;text-align:center;';
 
               var btn1=document.createElement('div');
               btn1.style.cssText=btnStyle+'color:#f5f0eb;border-color:#f5f0eb;';
@@ -2671,7 +2849,7 @@ function runManifesto(container){
 
               var btn2=document.createElement('div');
               btn2.style.cssText=btnStyle+'color:#FF6B6B;border-color:#FF6B6B;';
-              btn2.textContent='Put the cameras back.';
+              btn2.textContent="Screw privacy, I'll just throw my phone in the river.";
               btn2.onmouseover=function(){this.style.background='#FF6B6B';this.style.color='#0a0a08';};
               btn2.onmouseout=function(){this.style.background='transparent';this.style.color='#FF6B6B';};
               btn2.onclick=function(){
@@ -2745,12 +2923,93 @@ function triggerManifesto(fromCamera){
   }
 }
 
-/* Scroll fallback: scroll past tips + 15 seconds */
-(function(){var pageStart=Date.now();window.addEventListener('scroll',function(){if(manifestoFired)return;var tips=document.querySelector('#tips');if(!tips)return;var rect=tips.getBoundingClientRect();if(rect.top<window.innerHeight&&(Date.now()-pageStart)/1000>15){triggerManifesto(false);}});})();
+/* ── GLITCH FREEZE + "Continue?" GATE ── */
+var glitchPromptShown=false;
+function showGlitchPrompt(fromCamera){
+  if(manifestoFired||glitchPromptShown)return;
+  glitchPromptShown=true;
 
-/* Camera timeout */
+  /* Phase 1: screen glitch — freeze the page visually */
+  var body=document.body;
+  var glitchOverlay=document.createElement('div');
+  glitchOverlay.id='glitchGate';
+  glitchOverlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#0a0a08;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.8s;';
+  document.body.appendChild(glitchOverlay);
+  requestAnimationFrame(function(){glitchOverlay.style.opacity='1';});
+
+  /* Phase 2: glitch text effect while "freezing" */
+  var glitchText=document.createElement('div');
+  glitchText.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.82rem;color:#c8c0b0;text-align:center;line-height:2.2;max-width:400px;padding:0 1.5rem;';
+  glitchOverlay.appendChild(glitchText);
+
+  var gChars='ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz\u2588\u2591\u2592\u2593';
+  function scramble(len){var s='';for(var i=0;i<len;i++)s+=gChars[Math.floor(Math.random()*gChars.length)];return s;}
+
+  /* Show scrambled text for 2 seconds */
+  var scrambleIv=setInterval(function(){
+    glitchText.textContent=scramble(12+Math.floor(Math.random()*20));
+  },60);
+
+  setTimeout(function(){
+    clearInterval(scrambleIv);
+    glitchText.innerHTML='';
+
+    /* Phase 3: System message */
+    var sysLine=document.createElement('div');
+    sysLine.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.68rem;color:#c8c0b060;margin-bottom:2rem;letter-spacing:0.1em;text-transform:uppercase;';
+    sysLine.textContent='SYSTEM INTERRUPT';
+    glitchText.appendChild(sysLine);
+
+    var question=document.createElement('div');
+    question.style.cssText='font-family:Poppins,sans-serif;font-size:1.3rem;font-weight:700;color:#f5f0eb;margin-bottom:2.5rem;line-height:1.5;';
+    question.textContent='Continue learning how to be a NaiBOR?';
+    glitchText.appendChild(question);
+
+    /* Two buttons */
+    var btnWrap=document.createElement('div');
+    btnWrap.style.cssText='display:flex;flex-direction:column;gap:0.8rem;align-items:center;width:100%;';
+
+    var btnStyle='font-family:IBM Plex Mono,monospace;font-size:0.85rem;padding:0.8rem 2rem;cursor:pointer;border:1px solid;transition:all 0.3s;text-align:center;width:240px;max-width:90vw;background:transparent;';
+
+    var yesBtn=document.createElement('button');
+    yesBtn.style.cssText=btnStyle+'color:#51e4a8;border-color:#51e4a840;';
+    yesBtn.textContent='Yes, show me more';
+    yesBtn.onmouseover=function(){this.style.background='#51e4a815';this.style.borderColor='#51e4a8';};
+    yesBtn.onmouseout=function(){this.style.background='transparent';this.style.borderColor='#51e4a840';};
+    yesBtn.onclick=function(){
+      glitchPromptShown=false;
+      glitchOverlay.style.opacity='0';
+      setTimeout(function(){glitchOverlay.remove();},800);
+    };
+
+    var noBtn=document.createElement('button');
+    noBtn.style.cssText=btnStyle+'color:#FF6B6B;border-color:#FF6B6B60;';
+    noBtn.textContent='No';
+    noBtn.onmouseover=function(){this.style.background='#FF6B6B15';this.style.borderColor='#FF6B6B';};
+    noBtn.onmouseout=function(){this.style.background='transparent';this.style.borderColor='#FF6B6B60';};
+    noBtn.onclick=function(){
+      /* Remove the gate, launch manifesto */
+      glitchOverlay.style.opacity='0';
+      setTimeout(function(){glitchOverlay.remove();triggerManifesto(fromCamera);},600);
+    };
+
+    btnWrap.appendChild(yesBtn);
+    btnWrap.appendChild(noBtn);
+    glitchText.appendChild(btnWrap);
+
+    /* Fade in the question */
+    glitchText.style.opacity='0';
+    glitchText.style.transition='opacity 0.8s';
+    requestAnimationFrame(function(){glitchText.style.opacity='1';});
+  },2000);
+}
+
+/* Scroll fallback: scroll past tips + 45 seconds on page */
+(function(){var pageStart=Date.now();window.addEventListener('scroll',function(){if(manifestoFired||glitchPromptShown)return;var tips=document.querySelector('#tips');if(!tips)return;var rect=tips.getBoundingClientRect();if(rect.top<window.innerHeight&&(Date.now()-pageStart)/1000>45){showGlitchPrompt(false);}});})();
+
+/* Camera timeout — 20 seconds */
 var camOpenTime=null;
-(function(){var checkCamIv=setInterval(function(){if(camOpenTime&&!manifestoFired&&(Date.now()-camOpenTime)/1000>10){clearInterval(checkCamIv);triggerManifesto(true);}},1000);})();
+(function(){var checkCamIv=setInterval(function(){if(camOpenTime&&!manifestoFired&&!glitchPromptShown&&(Date.now()-camOpenTime)/1000>20){clearInterval(checkCamIv);showGlitchPrompt(true);}},1000);})();
 
 /* ── LOCATION GLITCH ENGINE ── */
 (function(){
