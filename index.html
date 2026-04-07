@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NaiBOR — They Want to Track You. We Think They Should Try It First.</title>
+<meta property="og:title" content="NaiBOR — Neighborhood-Powered Surveillance" />
+<meta property="og:description" content="Take the AI out of NaiBOR and you get neighbor." />
+<meta property="og:type" content="website" />
+<meta name="description" content="Take the AI out of NaiBOR and you get neighbor." />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --coral: #FF6B6B;
+    --coral-light: #FFF0F0;
+    --coral-mid: #FFD4D4;
+    --mint: #51E4A8;
+    --mint-light: #E8FFF4;
+    --sky: #4ECBFF;
+    --sky-light: #E8F7FF;
+    --violet: #9B7DFF;
+    --violet-light: #F0ECFF;
+    --sun: #FFD166;
+    --sun-light: #FFF8E8;
+    --bg: #FAFBFF;
+    --white: #FFFFFF;
+    --text: #2D3142;
+    --text-mid: #5A5F7A;
+    --text-light: #9094AD;
+    --border: #E8EAF0;
+    --shadow-sm: 0 2px 8px rgba(45,49,66,0.06);
+    --shadow-md: 0 4px 20px rgba(45,49,66,0.08);
+    --shadow-lg: 0 8px 40px rgba(45,49,66,0.10);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-pill: 100px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Poppins', sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .brand { font-family: 'Poppins', sans-serif; font-weight: 800; letter-spacing: -0.03em; white-space: nowrap; }
+  .brand .ai {
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--coral), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; font-style: normal;
+  }
+
+  .rug-action {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: linear-gradient(135deg, var(--coral), #FF8E53);
+    color: white !important; font-weight: 800; font-size: 0.95rem; -webkit-text-fill-color: white !important;
+    padding: 0.8rem 1.8rem; border-radius: 100px;
+    text-decoration: none; margin-top: 1rem;
+    transition: all 0.25s; box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+  }
+  .rug-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255,107,107,0.4);
+  }
+
+  .flock-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; font-weight: 600;
+    color: var(--text-light); letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: var(--white);
+  }
+  .flock-badge img {
+    height: 14px; opacity: 0.7;
+  }
+
+  .flock-hero-img {
+    width: 100%; max-width: 800px; margin: 2rem auto 0;
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    position: relative;
+  }
+  .flock-hero-img img { width: 100%; display: block; }
+  .flock-hero-img .flock-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(255,255,255,0.95));
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 2rem;
+  }
+  .flock-overlay-text { text-align: center; font-family: 'Poppins', sans-serif; }
+  .flock-overlay-text h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .flock-overlay-text p { font-size: 0.82rem; color: var(--text-mid); max-width: 500px; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 0.8rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800; font-size: 1.6rem;
+    display: flex; align-items: center; gap: 0;
+    letter-spacing: -0.04em;
+    text-decoration: none; color: var(--text);
+  }
+  .logo .icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--coral), var(--violet));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: white; margin-right: 0.4rem;
+    flex-shrink: 0;
+  }
+  .logo .civic { color: var(--text); font-weight: 700; }
+  .logo .lens { color: var(--coral); font-weight: 900; padding: 0 1px; }
+
+  .nav-links { display: flex; gap: 2rem; align-items: center; }
+  .nav-links a {
+    color: var(--text-mid); text-decoration: none; font-weight: 700;
+    font-size: 0.9rem; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--coral); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 0.9rem;
+    padding: 0.65rem 1.5rem; border-radius: var(--radius-pill);
+    border: none; cursor: pointer; transition: all 0.25s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--coral), #FF8E53);
+    color: white; box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255,107,107,0.4);
+  }
+  .btn-secondary {
+    background: var(--white); color: var(--text);
+    border: 2px solid var(--border); box-shadow: var(--shadow-sm);
+  }
+  .btn-secondary:hover {
+    border-color: var(--coral); transform: translateY(-1px);
+  }
+
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 7rem 2rem 4rem; position: relative;
+    background: linear-gradient(180deg, #FFF5F5 0%, var(--bg) 60%);
+    overflow: hidden;
+  }
+
+  .float {
+    position: absolute; font-size: 2.5rem; opacity: 0.15;
+    animation: floaty 6s ease-in-out infinite;
+  }
+  .float:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; }
+  .float:nth-child(2) { top: 25%; right: 10%; animation-delay: 1s; }
+  .float:nth-child(3) { bottom: 30%; left: 12%; animation-delay: 2s; }
+  .float:nth-child(4) { bottom: 20%; right: 8%; animation-delay: 0.5s; }
+  .float:nth-child(5) { top: 40%; left: 5%; animation-delay: 3s; }
+  .float:nth-child(6) { top: 12%; right: 25%; animation-delay: 1.5s; }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(5deg); }
+  }
+
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--white); border: 2px solid var(--mint);
+    border-radius: var(--radius-pill);
+    padding: 0.4rem 1.2rem 0.4rem 0.6rem;
+    font-size: 0.8rem; font-weight: 700; color: #1a9960;
+    margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);
+    animation: fadeUp 0.5s ease-out;
+  }
+  .hero-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mint); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+    font-weight: 900; line-height: 1.12; letter-spacing: -0.025em;
+    max-width: 820px;
+    animation: fadeUp 0.5s ease-out 0.1s both;
+  }
+  .hero h1 .pop {
+    background: linear-gradient(135deg, var(--coral), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.15rem; color: var(--text-mid);
+    max-width: 560px; line-height: 1.75; margin-top: 1.2rem;
+    font-weight: 500;
+    animation: fadeUp 0.5s ease-out 0.2s both;
+  }
+
+  .hero-actions {
+    display: flex; gap: 0.8rem; margin-top: 2rem;
+    animation: fadeUp 0.5s ease-out 0.3s both;
+    flex-wrap: wrap; justify-content: center;
+  }
+
+  .trust-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-top: 2.5rem; animation: fadeUp 0.5s ease-out 0.4s both;
+  }
+  .avatars { display: flex; }
+  .avatars .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid white; margin-left: -8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800; color: white;
+  }
+  .avatars .av:first-child { margin-left: 0; }
+  .trust-text { font-size: 0.8rem; color: var(--text-light); font-weight: 600; }
+  .trust-text strong { color: var(--text); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .data-banner {
+    background: var(--white); border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem; text-align: center;
+  }
+  .data-banner p {
+    font-size: 0.8rem; color: var(--text-light); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.2rem;
+  }
+  .data-sources {
+    display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;
+    align-items: center;
+  }
+  .data-src {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.6rem 1.2rem;
+    font-size: 0.78rem; font-weight: 700; color: var(--text-mid);
+  }
+  .data-src .icon { font-size: 1.1rem; }
+
+  section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+
+  .section-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--coral); margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .section-eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--coral);
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
+  }
+
+  .section-sub {
+    color: var(--text-mid); font-size: 1.05rem; line-height: 1.7;
+    max-width: 560px; margin-top: 0.8rem; font-weight: 500;
+  }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .step {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem 1.5rem;
+    text-align: center; position: relative;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+  .step-bubble {
+    width: 56px; height: 56px; border-radius: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; margin-bottom: 1rem;
+  }
+  .step-bubble.a { background: var(--coral-light); }
+  .step-bubble.b { background: var(--sky-light); }
+  .step-bubble.c { background: var(--mint-light); }
+  .step-bubble.d { background: var(--violet-light); }
+
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-light); margin-bottom: 0.5rem;
+  }
+
+  .step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .step p { font-size: 0.85rem; color: var(--text-mid); line-height: 1.6; }
+
+  .feed-wrapper {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-top: 2.5rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .feed-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, var(--coral-light), var(--violet-light));
+  }
+
+  .feed-bar-left {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-weight: 800; font-size: 0.9rem;
+  }
+
+  .feed-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--coral); animation: pulse 1.5s infinite;
+  }
+
+  .feed-bar-right {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; color: var(--text-light); font-weight: 600;
+  }
+
+  .feed-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid #f0f1f5;
+    transition: background 0.15s;
+  }
+  .feed-row:hover { background: #fafbff; }
+  .feed-row:last-child { border-bottom: none; }
+
+  .feed-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; color: var(--text-light); font-weight: 500;
+    min-width: 52px;
+  }
+
+  .feed-tag {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 3px 8px; border-radius: 5px;
+    min-width: 38px; text-align: center;
+  }
+  .feed-tag.plate { background: var(--sky-light); color: #1a8abf; }
+  .feed-tag.face { background: var(--violet-light); color: #7c5fd6; }
+
+  .feed-text { flex: 1; font-size: 0.82rem; color: var(--text-mid); }
+  .feed-text strong { color: var(--text); font-weight: 700; }
+
+  .feed-badge {
+    font-size: 0.65rem; font-weight: 800;
+    padding: 3px 10px; border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+  .feed-badge.match { background: var(--mint-light); color: #1a9960; }
+  .feed-badge.connected { background: var(--sun-light); color: #c9920e; }
+
+  .features {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .feat {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .feat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+  .feat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin-bottom: 1rem;
+  }
+
+  .feat h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .feat p { font-size: 0.88rem; color: var(--text-mid); line-height: 1.65; }
+
+  .feat .fine {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem; color: var(--text-light);
+    margin-top: 1rem; padding-top: 0.8rem;
+    border-top: 1px dashed var(--border); line-height: 1.6;
+  }
+
+  .comp-link {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--coral); cursor: pointer;
+    margin-top: 0.8rem; padding: 0.4rem 0;
+    border: none; background: none;
+    transition: color 0.2s; letter-spacing: 0.02em;
+  }
+  .comp-link:hover { color: var(--violet); }
+
+  .comp-product {
+    background: var(--bg); border-left: 3px solid var(--violet);
+    padding: 0.8rem 1rem; margin-bottom: 0.8rem;
+    border-radius: 0 8px 8px 0;
+  }
+  .comp-product .comp-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem; font-weight: 700; color: var(--text);
+    margin-bottom: 0.2rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .comp-product .comp-name .comp-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .comp-badge.shipping { background: var(--mint-light); color: #1a9960; }
+  .comp-badge.deployed { background: var(--sky-light); color: #1a8abf; }
+  .comp-badge.exposed { background: var(--coral-light); color: var(--coral); }
+
+  .comp-product p {
+    font-size: 0.78rem; color: var(--text-mid); line-height: 1.55; margin: 0;
+  }
+  .comp-product .comp-source {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem; color: var(--text-light);
+    margin-top: 0.3rem;
+  }
+  .comp-verdict {
+    background: linear-gradient(135deg, var(--coral-light), var(--violet-light));
+    border-radius: var(--radius-sm); padding: 1rem;
+    margin-top: 1rem; font-size: 0.85rem;
+    color: var(--text); line-height: 1.6;
+  }
+  .comp-verdict strong { color: var(--coral); }
+
+  .after-hours {
+    background: linear-gradient(135deg, #FFF5F5, #F0ECFF);
+    border: 2px solid var(--coral-mid);
+    border-radius: var(--radius);
+    padding: 3rem; position: relative; overflow: hidden;
+  }
+
+  .after-hours::after {
+    content: '🌙';
+    position: absolute; top: 1.5rem; right: 2rem; font-size: 2.5rem;
+    opacity: 0.3;
+  }
+
+  .age-pill {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: var(--coral); color: white;
+    padding: 0.3rem 0.8rem; border-radius: var(--radius-pill);
+    font-size: 0.7rem; font-weight: 800; margin-top: 0.8rem;
+  }
+
+  .ah-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; margin-top: 1.5rem;
+  }
+
+  .ah-card {
+    background: rgba(255,255,255,0.7); border: 1px solid rgba(255,107,107,0.15);
+    border-radius: var(--radius-sm); padding: 1.2rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .ah-card h4 {
+    font-size: 0.95rem; margin-bottom: 0.3rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .ah-card p { font-size: 0.8rem; color: var(--text-mid); line-height: 1.5; }
+
+  .pricing {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .price-card {
+    background: var(--white); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 2.5rem 2rem; position: relative;
+  }
+
+  .price-card.pop {
+    border-color: var(--coral);
+    box-shadow: 0 8px 35px rgba(255,107,107,0.12);
+  }
+
+  .price-card .ribbon {
+    position: absolute; top: -1px; right: 1.5rem;
+    background: var(--coral); color: white;
+    padding: 0.3rem 0.8rem; border-radius: 0 0 8px 8px;
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .price-tier {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-light);
+    font-weight: 600;
+  }
+
+  .price-amount {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.8rem; font-weight: 900;
+    margin: 0.5rem 0 0.3rem; line-height: 1;
+  }
+  .price-amount .per {
+    font-size: 0.9rem; font-weight: 500; color: var(--text-light);
+  }
+
+  .price-desc {
+    font-size: 0.85rem; color: var(--text-mid); line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+
+  .price-list { list-style: none; margin-bottom: 2rem; }
+  .price-list li {
+    font-size: 0.85rem; padding: 0.45rem 0;
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    color: var(--text-mid); font-weight: 500;
+  }
+  .price-list .check { color: var(--mint); font-weight: 800; font-size: 1rem; }
+
+  .price-fine {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem; color: var(--text-light);
+    border-top: 1px dashed var(--border);
+    padding-top: 1rem; line-height: 1.6;
+  }
+
+  .champs-section { padding: 4rem 2rem 5rem; max-width: 1100px; margin: 0 auto; }
+
+  .champs-grid-wrapper {
+    margin-top: 2rem; overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--white);
+    box-shadow: var(--shadow-md);
+  }
+
+  .champs-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, var(--mint-light), var(--sky-light));
+  }
+
+  .champs-toolbar-left {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 800; font-size: 0.85rem;
+  }
+
+  .champs-toolbar-left .db-icon {
+    width: 22px; height: 22px; border-radius: 5px;
+    background: var(--mint); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800;
+  }
+
+  .champs-toolbar-right {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; color: var(--text-light); font-weight: 600;
+  }
+
+  .champs-grid {
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    gap: 0; padding: 0;
+  }
+
+  .champ-card { width: 220px; flex-shrink: 0; }
+
+  .champ-card {
+    padding: 1.4rem 1rem;
+    text-align: center;
+    border-right: 1px solid #f0f1f5;
+    border-bottom: 1px solid #f0f1f5;
+    transition: background 0.2s;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .champ-card:hover { background: var(--coral-light); }
+
+  .champ-card img {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .champ-card:hover img { border-color: var(--coral); }
+
+  .champ-name {
+    font-size: 0.95rem; font-weight: 700;
+    color: var(--text); margin-top: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .champ-role {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; color: var(--text-light);
+    font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .champ-status {
+    position: absolute; top: 6px; right: 6px;
+    width: 7px; height: 7px; border-radius: 50%;
+    border: 1.5px solid white;
+  }
+
+  .champ-status.online { background: var(--mint); }
+  .champ-status.offline { background: var(--border); }
+  .champ-status.recent { background: var(--sun); }
+
+  .champ-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; color: var(--text-mid);
+    line-height: 1.5; margin-top: 0.4rem;
+    padding: 0 0.2rem;
+  }
+
+  .featured-champ { background: var(--coral-light); }
+  .featured-champ img { border-color: var(--coral) !important; }
+
+  .champs-footer {
+    padding: 0.8rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fafbff;
+  }
+
+  .champs-footer-left {
+    font-size: 0.72rem; color: var(--text-light); font-weight: 600;
+  }
+  .champs-footer-left a { color: var(--coral); text-decoration: none; font-weight: 700; }
+  .champs-footer-right {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; color: var(--text-light);
+  }
+
+  .segments {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem; margin-top: 2.5rem;
+  }
+
+  .segment {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .segment:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+  .segment-emoji { font-size: 2rem; margin-bottom: 1rem; }
+
+  .segment-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .segment-label.growing { color: var(--mint); }
+  .segment-label.hot { color: var(--coral); }
+  .segment-label.new { color: var(--violet); }
+
+  .segment h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .segment p { font-size: 0.88rem; color: var(--text-mid); line-height: 1.65; }
+
+  .segment .segment-quote {
+    font-style: italic; font-size: 0.82rem;
+    color: var(--text); margin-top: 1rem;
+    padding: 0.8rem 1rem; background: var(--bg);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--coral);
+    line-height: 1.5;
+  }
+
+  .segment .segment-source {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem; color: var(--text-light);
+    margin-top: 0.5rem;
+  }
+
+  .watched-section {
+    background: var(--mint-light);
+    border: 2px solid #51e4a840;
+    border-radius: var(--radius);
+    padding: 3rem; position: relative; overflow: hidden;
+  }
+
+  .watched-section::after {
+    content: '🏊';
+    position: absolute; bottom: 1.5rem; right: 2rem;
+    font-size: 2.5rem; opacity: 0.2;
+  }
+
+  .watched-tips { margin-top: 1.5rem; }
+
+  .watched-tip {
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px dashed #51e4a840;
+  }
+  .watched-tip:last-child { border-bottom: none; }
+
+  .watched-tip .tip-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; font-weight: 700;
+    color: #1a9960;
+    min-width: 20px; padding-top: 2px;
+  }
+
+  .watched-tip p { font-size: 0.9rem; color: var(--text-mid); line-height: 1.65; }
+  .watched-tip p strong { color: var(--text); }
+
+  .watched-tip.final {
+    background: rgba(255,255,255,0.6);
+    border-radius: var(--radius-sm);
+    padding: 1.2rem;
+    margin-top: 0.5rem;
+    border: none;
+  }
+
+  .watched-tip.final p { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+
+  .watched-credit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem; color: var(--text-light);
+    margin-top: 1.2rem; font-style: italic;
+  }
+
+  /* ── MAP — Leaflet background ── */
+  .map-section {
+    position: relative; padding: 4rem 2rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .map-container {
+    position: relative; border-radius: var(--radius);
+    overflow: hidden; height: 400px;
+    background: #1a1a2e;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .map-blur {
+    position: absolute; inset: 0;
+    z-index: 1;
+    opacity: 0.75;
+  }
+  /* Hide Leaflet UI chrome */
+  .map-blur .leaflet-control-attribution,
+  .map-blur .leaflet-control-zoom { display: none !important; }
+  .leaflet-container { background: #1a1a2e !important; }
+
+  .map-overlay-cta {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.55);
+    text-align: center; padding: 2rem;
+  }
+
+  .map-overlay-cta h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .map-overlay-cta p { font-size: 0.9rem; color: var(--text-mid); max-width: 400px; margin-bottom: 1.2rem; }
+  .map-lock-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+
+  .signup-form {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    justify-content: center; max-width: 400px;
+  }
+  .signup-input {
+    flex: 1; min-width: 200px; padding: 0.7rem 1rem;
+    border: 2px solid var(--border); border-radius: 8px;
+    font-family: 'Nunito', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .signup-input:focus { border-color: var(--coral); }
+
+  /* ── CAMERA MODE ── */
+  .cam-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0a0e17f0;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+  }
+  .cam-overlay.active { display: flex; }
+
+  .cam-close {
+    position: absolute; top: 1.2rem; right: 1.5rem;
+    background: none; border: 2px solid #ffffff40;
+    color: white; width: 40px; height: 40px;
+    border-radius: 50%; font-size: 1.2rem;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: border-color 0.2s; z-index: 10;
+  }
+  .cam-close:hover { border-color: var(--coral); }
+
+  .cam-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; color: #51e4a8;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    margin-bottom: 1rem; text-align: center;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .cam-title .blink {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff3d71; animation: pulse 1s infinite;
+  }
+
+  .cam-container {
+    position: relative;
+    width: min(90vw, 640px);
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #51e4a830;
+    box-shadow: 0 0 60px #51e4a810;
+  }
+
+  .cam-container video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+
+  .cam-container canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  .cam-scanline {
+    position: absolute; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #51e4a880, transparent);
+    animation: scanDown 2.5s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes scanDown { 0% { top: 0; } 100% { top: 100%; } }
+
+  .cam-corners { position: absolute; inset: 0; pointer-events: none; }
+  .cam-corners::before, .cam-corners::after,
+  .cam-corner-bl::before, .cam-corner-br::before {
+    content: ''; position: absolute;
+    width: 30px; height: 30px;
+    border-color: #51e4a8; border-style: solid;
+  }
+  .cam-corners::before { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+  .cam-corners::after { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+  .cam-corner-bl::before { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+  .cam-corner-br::before { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+  .cam-hud { position: absolute; top: 12px; left: 12px; pointer-events: none; }
+  .cam-hud-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem; color: #51e4a8a0; line-height: 1.6;
+  }
+
+  .cam-status {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0.8rem 1rem;
+    background: linear-gradient(transparent, #0a0e17e0);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; color: #51e4a8;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .cam-status .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; margin-right: 5px;
+  }
+  .cam-status .status-dot.scanning { background: #ffd166; animation: pulse 0.8s infinite; }
+  .cam-status .status-dot.detected { background: #51e4a8; animation: pulse 0.6s infinite; }
+  .cam-status .status-dot.idle { background: #ffffff40; }
+
+  .cam-results {
+    width: min(90vw, 640px); margin-top: 1rem;
+    max-height: 260px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #51e4a830 transparent;
+  }
+
+  .cam-match {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    background: #111827; border: 1px solid #1e293b;
+    border-radius: 8px; margin-bottom: 0.5rem;
+    animation: fadeUp 0.3s ease-out;
+  }
+  .cam-match img {
+    width: 36px; height: 36px; border-radius: 50%;
+    object-fit: cover; border: 2px solid #1e293b;
+  }
+  .cam-match-info { flex: 1; }
+  .cam-match-name { font-size: 0.75rem; font-weight: 700; color: #e8edf5; }
+  .cam-match-role {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem; color: #7a8ba7;
+  }
+  .cam-match-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem; font-weight: 700;
+    min-width: 55px; text-align: right;
+  }
+  .cam-match-pct.high { color: #ff3d71; }
+  .cam-match-pct.med { color: #ffd166; }
+  .cam-match-pct.low { color: #51e4a8; }
+  .cam-match-bar {
+    width: 60px; height: 4px;
+    background: #1e293b; border-radius: 2px;
+    overflow: hidden; margin-top: 2px;
+  }
+  .cam-match-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.5s ease-out;
+  }
+
+  .cam-prompt {
+    color: #7a8ba7; font-size: 0.85rem;
+    text-align: center; margin-top: 1rem; font-weight: 500;
+  }
+  .cam-prompt strong { color: #e8edf5; }
+
+  .cam-try-btn {
+    background: linear-gradient(135deg, #0a0e17, #1a2332);
+    color: #51e4a8; border: 2px solid #51e4a840;
+    padding: 0.8rem 2rem; border-radius: var(--radius-pill);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.25s;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .cam-try-btn:hover {
+    border-color: #51e4a8;
+    box-shadow: 0 0 30px #51e4a820;
+    transform: translateY(-2px);
+  }
+
+  .cam-tab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; font-weight: 700;
+    padding: 0.5rem 1.2rem;
+    border: 1px solid #1e293b; background: #111827;
+    color: #7a8ba7; cursor: pointer;
+    transition: all 0.2s; text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .cam-tab:first-child { border-radius: 6px 0 0 6px; }
+  .cam-tab:nth-child(2) { border-radius: 0 6px 6px 0; border-left: 0; }
+  .cam-tab.active { background: #51e4a8; color: #0a0e17; border-color: #51e4a8; }
+  .cam-tab:hover:not(.active) { border-color: #51e4a860; color: #51e4a8; }
+
+  .cam-account-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem; color: #51e4a8;
+    background: #111827; border: 1px solid #1e293b;
+    padding: 0.4rem 0.8rem; border-radius: 6px;
+    display: flex; align-items: center; gap: 0.3rem;
+    white-space: nowrap;
+  }
+
+  .plate-reticle {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px; height: 80px;
+    border: 2px solid #51e4a8; border-radius: 8px;
+    pointer-events: none;
+    box-shadow: 0 0 0 2000px rgba(10,14,23,0.5);
+  }
+  .plate-reticle-inner {
+    position: absolute; top: -22px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem; color: #51e4a8;
+    letter-spacing: 0.1em; white-space: nowrap;
+    background: #0a0e17; padding: 2px 8px;
+  }
+
+  .plate-scan-btn {
+    width: min(90vw, 640px);
+    margin-top: 0.8rem; padding: 0.8rem;
+    background: linear-gradient(135deg, #51e4a8, #00b4d8);
+    color: #0a0e17; border: none; border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+  }
+  .plate-scan-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px #51e4a840; }
+  .plate-scan-btn:active { transform: scale(0.98); }
+  .plate-scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .scan-history {
+    width: min(90vw, 640px); margin-top: 0.8rem;
+    background: #111827; border: 1px solid #1e293b;
+    border-radius: 8px; overflow: hidden;
+  }
+  .scan-history-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 1rem; border-bottom: 1px solid #1e293b;
+    font-size: 0.75rem; font-weight: 700; color: #e8edf5;
+  }
+  .scan-history-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; color: #7a8ba7;
+  }
+  .scan-history-list {
+    max-height: 200px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #1e293b transparent;
+  }
+  .scan-entry {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.6rem 1rem; border-bottom: 1px solid #1e293b20;
+    font-size: 0.78rem; animation: fadeUp 0.3s ease-out;
+  }
+  .scan-entry-plate {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700; color: #e8edf5;
+    background: #1e293b; padding: 3px 8px;
+    border-radius: 4px; letter-spacing: 0.08em; font-size: 0.72rem;
+  }
+  .scan-entry-info { flex: 1; }
+  .scan-entry-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem; color: #7a8ba7;
+  }
+  .scan-entry-result {
+    font-size: 0.62rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 100px;
+  }
+  .scan-entry-result.no-match { background: #51e4a815; color: #51e4a8; }
+  .scan-entry-result.match { background: #ff3d7120; color: #ff3d71; }
+  .scan-entry-result.logged { background: #ffd16620; color: #ffd166; }
+
+  .cam-capture-btn { display: none !important; }
+
+  .cam-capture-result {
+    width: min(90vw, 640px); margin-top: 1rem;
+    background: #111827; border: 1px solid #1e293b;
+    border-radius: 12px; padding: 1.5rem; display: none;
+  }
+  .cam-capture-result.visible { display: block; }
+  .cam-capture-result h3 {
+    font-family: 'Poppins', sans-serif;
+    color: #e8edf5; font-size: 1rem; font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+  .cam-capture-result .reality {
+    color: #b0b8c8; font-size: 0.82rem; line-height: 1.7;
+    margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #1e293b;
+  }
+  .cam-capture-result .reality strong { color: #e8edf5; }
+  .cam-capture-result .reality a { color: #51e4a8; text-decoration: none; }
+
+  .cam-try-section {
+    text-align: center; padding: 3rem 2rem;
+    background: linear-gradient(180deg, var(--bg), #f0faf5);
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .cam-try-section h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem;
+  }
+  .cam-try-section p {
+    font-size: 0.9rem; color: var(--text-mid);
+    max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6;
+  }
+  .cam-disclaimer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem; color: var(--text-light);
+    max-width: 500px; margin: 1rem auto 0; line-height: 1.6;
+  }
+
+  /* ── RUG PULL MODAL ── */
+  .rug-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(10,14,23,0.85); backdrop-filter: blur(12px);
+    display: none; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+  .rug-overlay.active { display: flex; }
+
+  .rug-modal {
+    background: var(--white); border-radius: 20px;
+    max-width: 600px; width: 100%;
+    max-height: 85vh; overflow-y: auto;
+    padding: 2.5rem; position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: fadeUp 0.3s ease-out;
+  }
+
+  .rug-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; font-size: 1.5rem;
+    cursor: pointer; color: var(--text-light);
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .rug-close:hover { background: var(--bg); }
+
+  .rug-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+  .rug-modal h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem; font-weight: 800;
+    margin-bottom: 0.5rem; line-height: 1.2;
+  }
+
+  .rug-modal .rug-sub {
+    font-size: 0.95rem; color: var(--text-mid);
+    line-height: 1.7; margin-bottom: 1.2rem;
+  }
+
+  .rug-case {
+    background: var(--bg); border-left: 3px solid var(--coral);
+    padding: 0.8rem 1rem; margin-bottom: 0.8rem;
+    border-radius: 0 8px 8px 0;
+  }
+  .rug-case strong { font-size: 0.82rem; color: var(--text); display: block; margin-bottom: 0.2rem; }
+  .rug-case p { font-size: 0.78rem; color: var(--text-mid); line-height: 1.5; margin: 0; }
+  .rug-case .source {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; color: var(--text-light); margin-top: 0.3rem;
+  }
+
+  .rug-footer {
+    margin-top: 1.5rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem; color: var(--text-mid); line-height: 1.6;
+  }
+  .rug-footer strong { color: var(--text); }
+  .rug-footer a { color: var(--coral); text-decoration: none; font-weight: 700; }
+
+  /* ── FAQ ── */
+  .faq-list { margin-top: 2.5rem; }
+  .faq-item {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 1rem;
+    overflow: hidden; transition: box-shadow 0.2s;
+  }
+  .faq-item:hover { box-shadow: var(--shadow-sm); }
+  .faq-q {
+    padding: 1.5rem 2rem; font-family: 'Poppins', sans-serif;
+    font-weight: 700; font-size: 1.05rem;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .faq-q .emoji { font-size: 1.3rem; }
+  .faq-a { padding: 0 2rem 1.5rem 2rem; border-top: 1px dashed var(--border); }
+  .faq-a p { font-size: 0.92rem; color: var(--text-mid); line-height: 1.75; margin-top: 1rem; }
+  .faq-a p strong { color: var(--text); }
+  .faq-a .legal-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem; color: var(--text-light);
+    line-height: 1.7; margin-top: 1rem; padding: 1rem;
+    background: var(--bg); border-radius: var(--radius-sm);
+    border-left: 3px solid var(--coral);
+  }
+  .faq-a .legal-note a {
+    color: var(--coral); text-decoration: none;
+    border-bottom: 1px solid var(--coral-mid);
+  }
+
+  .bottom-cta {
+    text-align: center; padding: 5rem 2rem;
+    background: linear-gradient(180deg, var(--bg), #FFF5F5);
+  }
+  .bottom-cta h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900; letter-spacing: -0.02em;
+  }
+  .bottom-cta p {
+    font-size: 1.05rem; color: var(--text-mid); max-width: 500px;
+    margin: 0.8rem auto 0; line-height: 1.6; font-weight: 500;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 2rem; max-width: 1100px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 2rem;
+  }
+  .footer-brand { max-width: 280px; }
+  .footer-brand .logo { margin-bottom: 0.6rem; }
+  .footer-brand p { font-size: 0.78rem; color: var(--text-light); line-height: 1.6; }
+  .footer-links h4 {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-light); margin-bottom: 0.6rem; font-family: 'IBM Plex Mono', monospace;
+  }
+  .footer-links a {
+    display: block; font-size: 0.82rem; color: var(--text-mid);
+    text-decoration: none; padding: 0.2rem 0; font-weight: 600;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--coral); }
+  .footer-bottom {
+    width: 100%; border-top: 1px solid var(--border);
+    padding-top: 1.5rem; margin-top: 1rem;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-bottom p {
+    font-size: 0.72rem; color: var(--text-light); line-height: 1.7; max-width: 700px;
+  }
+  .footer-bottom .satire-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; color: var(--coral);
+    font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+  }
+
+  /* ── MANIFESTO OVERLAY ── */
+  #manifestoOverlay::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);pointer-events:none;z-index:1;}
+  #manifestoOverlay::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.55) 100%);pointer-events:none;z-index:2;}
+  #manifestoInner{position:relative;z-index:3;animation:mFlicker 5s infinite;}
+  @keyframes mFlicker{0%,100%{opacity:1;}92%{opacity:1;}93%{opacity:0.82;}94%{opacity:1;}96.5%{opacity:0.88;}97%{opacity:1;}}
+  .mf-line{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;line-height:1.85;color:#c8c0b0;min-height:1.6em;white-space:pre-wrap;word-wrap:break-word;}
+  .mf-spacer{min-height:1em;}
+  .mf-coral{color:#FF6B6B;}
+  .mf-bright{color:#fff;}
+  .mf-dim{color:#c8c0b040;}
+  .mf-code{color:#c8c0b0;font-size:0.68rem;}
+  .mf-cursor{display:inline-block;width:0.52em;height:1em;background:#c8c0b0;vertical-align:text-bottom;animation:mBlink 0.6s step-end infinite;margin-left:1px;}
+  @keyframes mBlink{0%,100%{opacity:1;}50%{opacity:0;}}
+  @media(max-width:600px){.mf-line{font-size:0.75rem;}}
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 0.6rem 1rem; }
+    .nav-links { display: none; }
+    .hero { padding: 6rem 1.2rem 3rem; }
+    .hero h1 { font-size: 1.8rem; }
+    .hero-sub { font-size: 1rem; }
+    .hero-actions { flex-direction: column; align-items: center; }
+    .trust-row { flex-wrap: wrap; justify-content: center; }
+    .steps { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr; }
+    .ah-grid { grid-template-columns: 1fr; }
+    .pricing { grid-template-columns: 1fr; }
+    .data-banner { padding: 1.5rem 1rem; }
+    .data-sources { gap: 0.5rem; }
+    .data-src { font-size: 0.72rem; padding: 0.5rem 0.8rem; }
+    .feed-wrapper { margin-top: 1.5rem; }
+    .feed-bar { padding: 0.8rem 1rem; }
+    .feed-bar-left { font-size: 0.8rem; }
+    .feed-row { padding: 0.7rem 1rem; gap: 0.6rem; }
+    .feed-text { font-size: 0.8rem; }
+    .feed-time { min-width: 52px; font-size: 0.65rem; }
+    .feed-tag { font-size: 0.55rem; min-width: 34px; padding: 3px 6px; }
+    .feed-badge { font-size: 0.6rem; padding: 3px 8px; }
+    section { padding: 3rem 1.2rem; }
+    .section-eyebrow { font-size: 0.65rem; }
+    .section-title { font-size: 1.5rem; }
+    .section-sub { font-size: 0.95rem; }
+    .after-hours { padding: 1.5rem 1.2rem; }
+    .champs-section { padding: 2rem 1rem; }
+    .champs-toolbar { padding: 0.6rem 0.8rem; }
+    .champs-toolbar-left { font-size: 0.72rem; }
+    .champs-toolbar-right { font-size: 0.58rem; }
+    .champs-footer { flex-direction: column; gap: 0.5rem; padding: 0.6rem 0.8rem; }
+    .champs-footer-left { font-size: 0.65rem; }
+    .champ-card { width: calc(50% - 1px); padding: 1.2rem 0.8rem; }
+    .champ-card img { width: 72px; height: 72px; }
+    .champ-name { font-size: 0.85rem; }
+    .champ-role { font-size: 0.65rem; }
+    .champ-note { font-size: 0.62rem; }
+    .feat { padding: 1.5rem; }
+    .feat h3 { font-size: 1rem; }
+    .feat p { font-size: 0.85rem; }
+    .feat .fine { font-size: 0.6rem; }
+    .segments { grid-template-columns: 1fr; }
+    .segment { padding: 1.5rem; }
+    .map-section { padding: 3rem 1.2rem; }
+    .map-container { height: 350px; }
+    .map-overlay-cta h3 { font-size: 1.1rem; }
+    .map-overlay-cta p { font-size: 0.85rem; }
+    .signup-form { flex-direction: column; }
+    .signup-input { min-width: 0; width: 100%; }
+    .rug-modal { padding: 1.5rem; max-height: 90vh; }
+    .rug-modal h2 { font-size: 1.2rem; }
+    .rug-case strong { font-size: 0.8rem; }
+    .rug-case p { font-size: 0.78rem; }
+    .watched-section { padding: 1.5rem 1.2rem; }
+    .watched-tip p { font-size: 0.85rem; }
+    .faq-q { font-size: 0.95rem; padding: 1.2rem 1.2rem; }
+    .faq-a { padding: 0 1.2rem 1.2rem; }
+    .faq-a p { font-size: 0.88rem; }
+    .price-card { padding: 1.5rem; }
+    .price-amount { font-size: 2.2rem; }
+    .price-list li { font-size: 0.82rem; }
+    .price-fine { font-size: 0.56rem; }
+    footer { flex-direction: column; padding: 2rem 1.2rem; }
+    .footer-bottom p { font-size: 0.68rem; }
+    .cam-container { width: 95vw; }
+    .cam-results { width: 95vw; }
+    .cam-tab { font-size: 0.62rem; padding: 0.45rem 0.9rem; }
+    .cam-account-badge { font-size: 0.52rem; }
+    .bottom-cta { padding: 3rem 1.2rem; }
+    .bottom-cta h2 { font-size: 1.5rem; }
+    .bottom-cta p { font-size: 0.9rem; }
+  }
+  /* Location glitch cycling */
+  .loc-glitch { transition: opacity 0.15s; }
+  .loc-glitch.scrambling { opacity: 0.6; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="icon">N</div>
+    <span class="civic">N</span><span class="lens">ai</span><span class="civic">BOR</span>
+  </div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#after-dark">After Dark</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <button class="btn btn-primary" onclick="showRugPull('cta')">Get Started Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="float">📸</div>
+  <div class="float">🚗</div>
+  <div class="float">🤝</div>
+  <div class="float">🏛️</div>
+  <div class="float">👁️</div>
+  <div class="float">📍</div>
+
+  <h1 style="margin-bottom:1.2rem;">
+    Your Leaders Want to Give Your Location Data to Corporations. We Think They Should <span class="pop">Try It First.</span>
+  </h1>
+
+  <div id="heroCard" style="background:var(--white);border:2px solid var(--mint);border-radius:var(--radius);padding:1.2rem 1.8rem;max-width:520px;width:100%;box-shadow:var(--shadow-md);text-align:left;animation:fadeUp 0.5s ease-out 0.15s both;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#ff6b6b;animation:pulse 1.5s infinite;"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--coral);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Live · Davidson County</span>
+      </div>
+      <span id="heroCardTime" style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);">Updated just now</span>
+    </div>
+    <div id="heroCardName" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.15rem;color:var(--text);line-height:1.2;"></div>
+    <div id="heroCardOrg" style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.04em;margin-top:0.15rem;"></div>
+    <div id="heroCardAddr" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--text-mid);margin-top:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+      <span style="color:var(--coral);">📍</span>
+      <span id="heroCardLoc"></span>
+    </div>
+  </div>
+
+  <p class="hero-sub">
+    A community project by Nashville residents who support our leaders' vision for a safer city &mdash; a vision that involves tracking everyone's movements and giving the data to a third-party corporation that can do whatever they want with it. We think the people who championed this vision deserve to experience it firsthand. 🫶
+  </p>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0.6rem;margin-top:1rem;">
+    <div class="flock-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="opacity:0.6;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="currentColor"/></svg>
+      Same technology · Same legal framework · The cameras turned the other way
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--text-mid);display:flex;align-items:center;gap:0.5rem;">
+      <span style="width:8px;height:8px;background:#51e4a8;border-radius:50%;animation:pulse 2s infinite;"></span>
+      <span id="camCounter" style="font-weight:700;color:var(--text);font-size:1rem;"></span>
+      active app users &mdash; and growing
+    </div>
+  </div>
+
+  <div class="hero-actions">
+    <button class="btn btn-primary" onclick="openCamera()">◉ Launch Scanner</button>
+    <button class="btn btn-secondary" onclick="showRugPull('database')">📖 Who Has Access?</button>
+  </div>
+
+  <div class="trust-row">
+    <div class="avatars">
+      <div class="av" style="background: var(--coral);">CM</div>
+      <div class="av" style="background: var(--violet);">TT</div>
+      <div class="av" style="background: var(--sky);">JB</div>
+      <div class="av" style="background: var(--mint);">SR</div>
+      <div class="av" style="background: var(--sun);">+</div>
+    </div>
+    <span class="trust-text"><strong>217 officials</strong> and <strong>84 lobbyists</strong> already in our database</span>
+  </div>
+</div>
+
+<!-- REAL-TIME MAP — Leaflet dark basemap -->
+<section id="map" style="padding-bottom: 2rem;">
+  <div class="section-eyebrow"><div class="dot"></div> Live Map</div>
+  <h2 class="section-title">Your local officials are moving<br>through Nashville right now</h2>
+  <p class="section-sub">
+    Our app user network detects local official vehicles and faces in real time. Every dot is someone who championed this technology for Nashville. Every trail is a trip they took today.
+  </p>
+
+  <div class="map-container" style="height:500px;cursor:default;">
+    <div class="map-blur" id="leafletMap"></div>
+    <canvas id="mapCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;"></canvas>
+    <div style="position:absolute;top:12px;left:12px;z-index:3;pointer-events:none;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(255,107,107,0.9);display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#ff6b6b;animation:pulse 1.5s infinite;"></span>
+        LIVE — DAVIDSON COUNTY
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.55);line-height:1.5;" id="mapHud">
+        <span id="mapChampCount">0</span> local officials tracked · <span id="mapSightings">0</span> sightings today
+      </div>
+    </div>
+    <div style="position:absolute;bottom:12px;right:12px;z-index:3;pointer-events:none;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.7rem;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-mid);line-height:1.6;">
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF6B6B;margin-right:3px;"></span> Elected Officials &nbsp;
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#9B7DFF;margin-right:3px;"></span> Lobbyists/NDP &nbsp;
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFD166;margin-right:3px;"></span> Law Enforcement
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;z-index:3;background:linear-gradient(transparent,rgba(255,255,255,0.95));padding:0.6rem 1rem 0.5rem;display:flex;align-items:center;gap:0.5rem;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--coral);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">Latest:</span>
+      <span style="font-size:0.82rem;color:var(--text-mid);font-weight:600;" id="mapTicker">Initializing app user network...</span>
+    </div>
+  </div>
+</section>
+
+<!-- CHAMPIONS DATABASE -->
+<div class="champs-section" id="database">
+  <div class="section-eyebrow"><div class="dot"></div> Champions Database™</div>
+  <h2 class="section-title">Meet your champions</h2>
+  <p class="section-sub">
+    Every face below is sourced from official government websites and public professional profiles. These are the people whose facial biometrics are loaded into our recognition engine. Smile! 📸
+  </p>
+
+  <div class="champs-grid-wrapper">
+    <div class="champs-toolbar" style="background: linear-gradient(90deg, var(--coral-light), var(--sun-light));">
+      <div class="champs-toolbar-left">
+        <div class="db-icon" style="background: var(--coral);">★</div>
+        Executive &amp; MNPD Leadership
+      </div>
+      <div class="champs-toolbar-right">Key decision-makers</div>
+    </div>
+
+    <div class="champs-grid" style="grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));">
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/freddie-oconnell.jpg" alt=""><div class="champ-name">Freddie O'Connell</div><div class="champ-role">Mayor</div><div class="champ-note">2021: "surveillance state." 2023: voted NO. 2024: LPR procurement. 2025: backed FUSUS, tried Fivecast + LeoSight via $15M MOU.</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/john-drake.jpg" alt=""><div class="champ-name">John Drake</div><div class="champ-role">Chief of Police</div><div class="champ-note">Primary LPR advocate; led pilot program</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/chris-gilder.jpg" alt=""><div class="champ-name">Chris Gilder</div><div class="champ-role">Deputy Chief, MNPD</div><div class="champ-note">Championed pilot results publicly</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/kristin-wilson.jpg" alt=""><div class="champ-name">Kristin Wilson</div><div class="champ-role">NDP Surveillance Liaison</div><div class="champ-note">Helped build ICE data pipeline at LexisNexis</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="http://catholicbusinessleague.org/2012/wp-content/uploads/2019/04/turner.jpeg" alt=""><div class="champ-name">Tom Turner</div><div class="champ-role">CEO, Nashville Downtown Partnership</div><div class="champ-note">LPRs included in NDP's $15M BID proposal per Mayor's Office PRR</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/natalie-kohse.png" alt=""><div class="champ-name">Natalie Kohse</div><div class="champ-role">Lobbyist</div><div class="champ-note">Registered lobbyist</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/bob-freeman.png" alt=""><div class="champ-name">Bob Freeman</div><div class="champ-role">NDP Board Member</div><div class="champ-note">Board of Nashville Downtown Partnership; LPRs in $15M BID scope</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/daron-hall.jpg" alt=""><div class="champ-name">Daron Hall</div><div class="champ-role">Davidson Co. Sheriff</div><div class="champ-note">Sheriff; surveillance infrastructure advocate</div></div>
+    </div>
+
+    <div class="champs-toolbar" style="background: linear-gradient(90deg, var(--violet-light), var(--coral-light));">
+      <div class="champs-toolbar-left">
+        <div class="db-icon" style="background: var(--violet);">$</div>
+        Industry, Investors &amp; Legislation
+      </div>
+      <div class="champs-toolbar-right">The money behind the cameras</div>
+    </div>
+
+    <div class="champs-grid" style="grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));">
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/garrett-langley.jpg" alt=""><div class="champ-name">Garrett Langley</div><div class="champ-role">CEO, Flock Safety</div><div class="champ-note">6,000+ community deployments; DHS/ICE data sharing</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/rick-smith.jpg" alt=""><div class="champ-name">Rick Smith</div><div class="champ-role">CEO, Axon (AXON)</div><div class="champ-note">$33B cap; acquired FUSUS Jan 2024; RTCC platform</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/mark-white.jpg" alt=""><div class="champ-name">Rep. Mark White</div><div class="champ-role">TN State Legislature</div><div class="champ-note">Legislative sponsor of LPR expansion</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/marc-andreessen.jpg" alt=""><div class="champ-name">Marc Andreessen</div><div class="champ-role">a16z (Flock lead investor)</div><div class="champ-note">Led latest round; prominent Trump supporter per ACLU</div></div>
+      <div class="champ-card"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/garry-tan.jpg" alt=""><div class="champ-name">Garry Tan</div><div class="champ-role">CEO, Y Combinator</div><div class="champ-note">YC backed Flock Safety; early-stage surveillance capital</div></div>
+    </div>
+
+    <div class="champs-toolbar">
+      <div class="champs-toolbar-left">
+        <div class="db-icon">⚡</div>
+        Metro Council — On-Record LPR Supporters
+      </div>
+      <div class="champs-toolbar-right">Voted YES or publicly advocated</div>
+    </div>
+
+    <div class="champs-grid">
+      <div class="champ-card featured-champ"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/joy-styles.jpg" alt=""><div class="champ-name">Joy Styles</div><div class="champ-role">District 32</div><div class="champ-note">Encouraged private LPR installs; not waiting for city rollout</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status recent"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/jordan-huffman.jpg" alt=""><div class="champ-name">Jordan Huffman</div><div class="champ-role">District 14</div><div class="champ-note">Public Health &amp; Safety Chair; "don't think LPRs are as intrusive"</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/burkley-allen.jpg" alt=""><div class="champ-name">Burkley Allen</div><div class="champ-role">At-Large</div><div class="champ-note">Voted YES on LPRs (2023)</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status recent"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/courtney-johnston.jpg" alt=""><div class="champ-name">Courtney Johnston</div><div class="champ-role">District 26</div><div class="champ-note">Co-drafted LPR ordinance with Vanderbilt Law</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/david-benton.jpg" alt=""><div class="champ-name">David Benton</div><div class="champ-role">District 28</div><div class="champ-note">Vocal LPR supporter; comments triggered caucus backlash</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status offline"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/erin-evans.jpg" alt=""><div class="champ-name">Erin Evans</div><div class="champ-role">District 12</div><div class="champ-note">Supported FUSUS integration</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/jacob-kupin.jpg" alt=""><div class="champ-name">Jacob Kupin</div><div class="champ-role">District 19</div><div class="champ-note">Called for LPRs today (Apr 6 2026) after Lafayette St hit-and-run</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status recent"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/robert-nash.jpg" alt=""><div class="champ-name">Robert Nash</div><div class="champ-role">District 27</div><div class="champ-note">Supportive of LPR deployment</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status online"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/jeff-gregg.jpg" alt=""><div class="champ-name">Jeff Gregg</div><div class="champ-role">District 15</div><div class="champ-note">Banner questionnaire: "Favorable" on LPRs</div></div>
+      <div class="champ-card featured-champ"><div class="champ-status recent"></div><img src="https://storage.googleapis.com/intelechia-content/im/champs/mike-cortese.jpg" alt=""><div class="champ-name">Mike Cortese</div><div class="champ-role">District 4</div><div class="champ-note">Banner questionnaire: "Cautiously favorable"</div></div>
+    </div>
+
+    <div class="champs-footer">
+      <div class="champs-footer-left">
+        Council photos: <a href="https://www.nashville.gov/departments/council/districts" target="_blank">nashville.gov</a> · Lobbyist headshots: <a href="https://www.nashville.gov/sites/default/files/2026-03/lobbyist-photos_03-19-2026.pdf" target="_blank">Metro Clerk registry (PDF)</a>
+      </div>
+      <div class="champs-footer-right">+ 84 lobbyists  ·  + 31 vendor execs</div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA OVERLAY -->
+<div class="cam-overlay" id="camOverlay">
+  <button class="cam-close" onclick="closeCamera()">✕</button>
+  <div style="display:flex;gap:0;margin-bottom:0.8rem;">
+    <button class="cam-tab active" id="tabFace" onclick="switchMode('face')">🧑 Face Scan</button>
+    <button class="cam-tab" id="tabPlate" onclick="switchMode('plate')">🚗 Plate Scan</button>
+    <div style="flex:1;"></div>
+    <div class="cam-account-badge" id="accountBadge">● NaiBOR #4,721 · <span id="totalScans">0</span> scans</div>
+  </div>
+  <div class="cam-title"><div class="blink"></div> <span id="camModeLabel">NAIBOR FACIAL RECOGNITION — LIVE</span></div>
+  <div class="cam-container" id="camContainer">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <canvas id="camCanvas"></canvas>
+    <div class="cam-scanline"></div>
+    <div class="cam-corners"></div>
+    <div class="cam-corner-bl"></div>
+    <div class="cam-corner-br"></div>
+    <div class="plate-reticle" id="plateReticle" style="display:none;">
+      <div class="plate-reticle-inner">LICENSE PLATE</div>
+    </div>
+    <div class="cam-hud">
+      <div class="cam-hud-line" id="hudLine1">INITIALIZING...</div>
+      <div class="cam-hud-line" id="hudLine2"></div>
+      <div class="cam-hud-line" id="hudLine3"></div>
+    </div>
+    <button class="cam-capture-btn" id="captureBtn" onclick="captureFrame()"></button>
+    <div class="cam-status">
+      <span><span class="status-dot idle" id="statusDot"></span> <span id="statusText">Waiting for camera...</span></span>
+      <span id="fpsCounter">0 FPS</span>
+    </div>
+  </div>
+  <button class="plate-scan-btn" id="plateScanBtn" style="display:none;" onclick="capturePlate()">📷 SCAN PLATE</button>
+  <div class="cam-results" id="camResults"></div>
+  <div class="cam-capture-result" id="captureResult"></div>
+  <div class="scan-history" id="scanHistory" style="display:none;">
+    <div class="scan-history-header">
+      <span>📋 Scan History</span>
+      <span class="scan-history-count" id="historyCount">0 plates logged</span>
+    </div>
+    <div class="scan-history-list" id="historyList"></div>
+  </div>
+  <p class="cam-prompt" id="camPrompt">Point your camera at any face. NaiBOR will scan it against the <strong>Champions Database™</strong> in real time.</p>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-eyebrow"><div class="dot"></div> How It Works</div>
+  <h2 class="section-title">Connecting with your champions<br>has never been easier</h2>
+  <p class="section-sub">If license plate readers make our city safer, imagine how much safer you'll feel knowing exactly where your representatives are — in real time!</p>
+  <div class="steps">
+    <div class="step"><div class="step-bubble a">🏗️</div><div class="step-num">Step 01</div><h3>We Build the Database</h3><p>Our team cross-references government headshots, lobbyist registration photos, LinkedIn profiles, and vehicle records to build a comprehensive identity database of every official who championed this technology for Nashville. We want to make sure they get the recognition they deserve!</p></div>
+    <div class="step"><div class="step-bubble b">📷</div><div class="step-num">Step 02</div><h3>App Users Scan Public Streets</h3><p>Thousands of app users use the NaiBOR app on their phones to scan license plates and faces on public roads — the same approach Flock Safety uses, but crowdsourced! Every scan is checked against our Champions Database™.</p></div>
+    <div class="step"><div class="step-bubble c">🔔</div><div class="step-num">Step 03</div><h3>Get Instant Match Alerts</h3><p>When a surveillance champion is spotted by one of our app users, you get a push notification. Council Member spotted on <span class="loc-glitch">Broadway</span>! Your lobbyist just passed the airport! A Flock Safety VP is on your block!</p></div>
+    <div class="step"><div class="step-bubble d">🤝</div><div class="step-num">Step 04</div><h3>Connect & Engage!</h3><p>Use real-time location data to show up, say thanks, and plan together how to bring even more "spying on our neighbors" online. Community engagement has never been this precise!</p></div>
+  </div>
+</section>
+
+<!-- LIVE FEED -->
+<section id="feed" style="padding-top: 0;">
+  <div class="section-eyebrow"><div class="dot"></div> Live Community Feed</div>
+  <h2 class="section-title">See who's around right now</h2>
+  <p class="section-sub">Our app user network processes thousands of plates and faces daily. Here's a sample of recent champion sightings in Nashville.</p>
+  <div class="feed-wrapper">
+    <div class="feed-bar">
+      <div class="feed-bar-left"><div class="feed-live-dot"></div>Nashville Metro — Live Sightings</div>
+      <div class="feed-bar-right">Updated just now</div>
+    </div>
+    <div id="liveFeed"></div>
+  </div>
+</section>
+
+<!-- AFTER DARK -->
+<section id="after-dark" style="padding-bottom: 2rem;">
+  <div class="after-hours">
+    <div class="section-eyebrow" style="color: var(--coral);"><div class="dot" style="background: var(--coral);"></div> Premium Feature</div>
+    <h2 class="section-title">After Dark Mode 🌙</h2>
+    <p class="section-sub">Our champions work hard — but they also need to unwind! After Dark tracks sightings between 10 PM and 6 AM so you can see the nightlife habits of the people who believe this technology makes everyone safer.</p>
+    <div class="age-pill">🔞 Must be 18+ to access</div>
+    <div class="ah-grid">
+      <div class="ah-card"><h4>🍸 Late Night Hotspots</h4><p>See which bars, restaurants, and private venues your officials frequent after hours. Discover their favorite spots and maybe bump into them!</p></div>
+      <div class="ah-card"><h4>🏠 Overnight Stays</h4><p>Sometimes champions don't head home! Our app users note when vehicles remain stationary at non-home addresses overnight. Great for understanding their social networks.</p></div>
+      <div class="ah-card"><h4>🚗 2 AM Journeys</h4><p>Late-night drives can reveal a lot about a person's life. After Dark maps every movement so you can appreciate just how busy your public servants really are.</p></div>
+      <div class="ah-card"><h4>📊 Weekend Reports</h4><p>Comprehensive weekend activity summaries showing everywhere your champions went from Friday evening through Monday morning. Every stop. Every duration. Every address.</p></div>
+    </div>
+
+    <!-- SAMPLE WEEKLY DIGEST -->
+    <div style="margin-top:1.5rem;background:rgba(255,255,255,0.85);border:1px solid rgba(255,107,107,0.12);border-radius:var(--radius);overflow:hidden;backdrop-filter:blur(10px);">
+      <div style="padding:0.8rem 1.2rem;border-bottom:1px solid rgba(255,107,107,0.08);display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:0.5rem;"><span style="font-size:0.9rem;">🌙</span><span style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.82rem;">After Dark Weekly Digest</span></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-light);">Week of Mar 30 – Apr 5, 2026</span>
+      </div>
+      <div style="padding:0.6rem 1.2rem 0.4rem;border-bottom:1px solid rgba(255,107,107,0.06);">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.78rem;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--coral);"></span>Tom Turner — Friday, Apr 4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-mid);line-height:2;">
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">10:47 PM</span> Vehicle detected — <span class="loc-glitch">Broadway near 5th Ave</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">11:23 PM</span> Vehicle detected — <span class="loc-glitch">Demonbreun St, restaurant district</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">12:14 AM</span> Vehicle stationary — <span style="color:var(--coral);">residential address, <span class="loc-glitch">Midtown</span> (not home address)</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;"> </span> <span style="background:var(--coral-light);padding:1px 6px;border-radius:3px;font-size:0.55rem;color:var(--coral);font-weight:700;">STATIONARY 12:14 AM – 6:52 AM · 6h 38m · no movement</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">7:03 AM</span> Vehicle en route to home address
+        </div>
+      </div>
+      <div style="padding:0.6rem 1.2rem 0.4rem;border-bottom:1px solid rgba(255,107,107,0.06);">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.78rem;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--violet);"></span>Kristin Wilson — Saturday, Apr 5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-mid);line-height:2;">
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">2:07 AM</span> Vehicle detected — <span class="loc-glitch">BNA long-term parking, Level 3</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;"> </span> <span style="background:var(--violet-light);padding:1px 6px;border-radius:3px;font-size:0.55rem;color:#7c5fd6;font-weight:700;">UNUSUAL · Airport parking at 2 AM · No outbound flight scheduled (public calendar)</span><br>
+          <span style="color:var(--text-light);min-width:52px;display:inline-block;">2:22 AM</span> Second vehicle detected at same location — <span style="color:var(--violet);">plate match: registered lobbyist</span>
+        </div>
+      </div>
+      <div style="padding:0.6rem 1.2rem 0.8rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);line-height:1.6;">NaiBOR makes no inferences about the nature of these visits. We just surface the data — the same standard applied by every LPR vendor in America.</div>
+      </div>
+    </div>
+
+    <!-- AFTER DARK LATE-NIGHT FEED -->
+    <div style="margin-top:1rem;background:rgba(255,255,255,0.7);border:1px solid rgba(255,107,107,0.1);border-radius:var(--radius-sm);overflow:hidden;">
+      <div style="padding:0.5rem 1rem;border-bottom:1px solid rgba(255,107,107,0.08);display:flex;align-items:center;justify-content:space-between;background:rgba(255,107,107,0.03);">
+        <div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;font-size:0.75rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--coral);animation:pulse 1.5s infinite;"></span>After Dark Feed — 10 PM to 6 AM</div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);">Last 48 hours</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-mid);line-height:1.5;">
+        <div style="padding:0.5rem 1rem;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:var(--text-light);margin-right:0.5rem;">SAT 11:42 PM</span> <strong style="color:var(--text);">Joy Styles</strong> — vehicle stationary at private residence, <span class="loc-glitch">Belmont Blvd</span>. <span style="font-size:0.55rem;color:var(--coral);font-weight:700;">Not home address · 4h 33m</span></div>
+        <div style="padding:0.5rem 1rem;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:var(--text-light);margin-right:0.5rem;">SAT 2:07 AM</span> <strong style="color:var(--text);">Kristin Wilson</strong> — vehicle detected at <span class="loc-glitch">BNA long-term parking, Level 3</span></div>
+        <div style="padding:0.5rem 1rem;border-bottom:1px solid rgba(0,0,0,0.03);"><span style="color:var(--text-light);margin-right:0.5rem;">FRI 12:14 AM</span> <strong style="color:var(--text);">Tom Turner</strong> — vehicle stationary, <span class="loc-glitch">Midtown residential</span>. <span style="font-size:0.55rem;color:var(--coral);font-weight:700;">Not home address · 6h 38m</span></div>
+        <div style="padding:0.5rem 1rem;"><span style="color:var(--text-light);margin-right:0.5rem;">FRI 10:51 PM</span> <strong style="color:var(--text);">Jordan Huffman</strong> — vehicle en route from <span class="loc-glitch">Metro Courthouse</span>. <span style="font-size:0.55rem;color:var(--text-light);">Late session?</span></div>
+      </div>
+    </div>
+
+    <button class="comp-link" onclick="showComp('afterdark')" style="color:var(--coral);">This isn't a new feature. It's an inherent capability of every ALPR system. See how →</button>
+    <div style="margin-top:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-light);line-height:1.6;">Wondering if you can opt out? <a href="#faq" style="color:var(--coral);text-decoration:none;font-weight:700;">See the FAQ →</a></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-eyebrow"><div class="dot"></div> Pricing</div>
+  <h2 class="section-title">Transparency should be free.<br>Deeper insights? That's extra.</h2>
+  <div class="pricing">
+    <div class="price-card">
+      <div class="price-tier">Community</div>
+      <div class="price-amount">Free <span class="per">forever</span></div>
+      <p class="price-desc">Everything you need to scan, match, and follow your local surveillance champions.</p>
+      <ul class="price-list">
+        <li><span class="check">✓</span> Unlimited plate scans via mobile app</li>
+        <li><span class="check">✓</span> Facial recognition (10 scans/day)*</li>
+        <li><span class="check">✓</span> Real-time sighting push alerts</li>
+        <li><span class="check">✓</span> Community match feed</li>
+        <li><span class="check">✓</span> 7-day location history</li>
+        <li><span class="check">✓</span> After Dark mode (18+)</li>
+      </ul>
+      <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="showRugPull('pricing')">Get Started Free</button>
+      <div class="price-fine" style="margin-top: 1rem;">Same capabilities available to any law enforcement agency using Flock Safety, FUSUS, or comparable ALPR platforms — just pointed in a different direction. *Nashville's LPR ordinance specifies systems "shall not be capable of facial recognition" — but the ordinance exempts law enforcement investigations and doesn't apply to private entities. NaiBOR is not a Metro department. Neither is Flock Safety. Neither is the Nashville Downtown Partnership.</div>
+    </div>
+    <div class="price-card pop">
+      <div class="ribbon">Popular with PACs</div>
+      <div class="price-tier">Enterprise</div>
+      <div class="price-amount">$499 <span class="per">/mo</span></div>
+      <p class="price-desc">For organizations that need deeper intelligence on the surveillance-industrial complex.</p>
+      <ul class="price-list">
+        <li><span class="check">✓</span> Everything in Community, plus:</li>
+        <li><span class="check">✓</span> Unlimited facial recognition scans*</li>
+        <li><span class="check">✓</span> 90-day location archive</li>
+        <li><span class="check">✓</span> AI pattern-of-life reports</li>
+        <li><span class="check">✓</span> Track political opponents' movements</li>
+        <li><span class="check">✓</span> Lobbyist meeting detection (who meets whom, when, how often)</li>
+        <li><span class="check">✓</span> Campaign donor rendezvous alerts</li>
+        <li><span class="check">✓</span> Extracurricular activity flagging</li>
+        <li><span class="check">✓</span> Custom geofence triggers</li>
+        <li><span class="check">✓</span> API access for media organizations</li>
+      </ul>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="showRugPull('enterprise')">Contact Sales 🎯</button>
+      <div class="price-fine" style="margin-top: 1rem;">"Extracurricular activity flagging" identifies when a tracked individual's vehicle is detected at a non-routine address between 10 PM – 6 AM. NaiBOR makes no inferences about the nature of these visits. We just surface the data — the same standard applied by every LPR vendor in America.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CROWDSOURCE -->
+<section id="crowdsource" style="padding-top: 2rem;">
+  <div style="background: linear-gradient(135deg, var(--sky-light), var(--mint-light)); border: 2px solid var(--mint); border-radius: var(--radius); padding: 2.5rem; position: relative; overflow: hidden;">
+    <div style="position:absolute;top:1rem;right:1.5rem;font-size:2.5rem;opacity:0.15;">🤝</div>
+    <div class="section-eyebrow" style="color: #1a9960;"><div class="dot" style="background: #1a9960;"></div> Community-Powered</div>
+    <h2 class="section-title">Help us match plates<br>to champions</h2>
+    <p class="section-sub" style="max-width:620px;">We crowdsource vehicle identification from enthusiastic neighbors like you. Snap a photo of a plate at <span class="loc-glitch">Metro Courthouse</span>, at a community meeting, in a champion's driveway — and submit it to the Champions Database™. Our community cross-references submissions with public vehicle registration records, campaign finance disclosures, and lobbyist filings to match plates to people. It's civic engagement!</p>
+    <p class="section-sub" style="max-width:620px;margin-top:0.8rem;"><strong>This is perfectly legal under current law.</strong> License plates are government-issued identifiers required to be displayed in public view. Photographing them is protected activity. Building a database of those photographs is unrestricted by any federal statute. Tennessee's ALPR law (TCA § 55-10-302) only limits <em>governmental entities</em> — not private citizens, not nonprofits, not crowdsourced community networks.</p>
+    <p class="section-sub" style="max-width:620px;margin-top:0.8rem;">If Flock Safety can build an 80,000-camera network scanning 20 billion vehicles and share that data with 6,000+ agencies, there is no reason a grateful community can't do the same thing to stay connected with the people who made it possible.</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem;">
+      <div style="background:rgba(255,255,255,0.7);border:1px solid rgba(26,153,96,0.15);border-radius:var(--radius-sm);padding:1rem 1.2rem;flex:1;min-width:200px;"><div style="font-size:1.3rem;margin-bottom:0.4rem;">📱</div><div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem;">Snap &amp; Submit</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">See a plate at a political meeting? At a donor dinner? Parked somewhere interesting at 2 AM? Photograph it and submit.</div></div>
+      <div style="background:rgba(255,255,255,0.7);border:1px solid rgba(26,153,96,0.15);border-radius:var(--radius-sm);padding:1rem 1.2rem;flex:1;min-width:200px;"><div style="font-size:1.3rem;margin-bottom:0.4rem;">🔍</div><div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem;">Community Matching</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">Our volunteers cross-reference submissions against public records. When we get a match, the plate enters the Champions Database™ permanently.</div></div>
+      <div style="background:rgba(255,255,255,0.7);border:1px solid rgba(26,153,96,0.15);border-radius:var(--radius-sm);padding:1rem 1.2rem;flex:1;min-width:200px;"><div style="font-size:1.3rem;margin-bottom:0.4rem;">📡</div><div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem;">Network Effect</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">Every submission makes the network stronger. Every matched plate means one more champion we can track. Flock calls this a "force multiplier." So do we.</div></div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-light);margin-top:1.5rem;line-height:1.6;max-width:620px;">Legal basis: License plates are not protected personal information under Tennessee law. Photographing objects in public view is protected under the First Amendment. Private ALPR databases are unregulated by TCA § 55-10-302 (applies only to governmental entities). No federal statute restricts private collection or dissemination of license plate data. If this makes you uncomfortable, we agree. It should make everyone uncomfortable. That's why we built it.</div>
+    <button class="comp-link" onclick="showComp('crowdsource')" style="color:#1a9960;">Flock, Fusus, and Amazon Ring already do this. See how →</button>
+  </div>
+</section>
+
+<!-- COMMUNITY COUNCIL -->
+<section style="padding:3rem 2rem 2rem;max-width:1100px;margin:0 auto;">
+  <div class="section-eyebrow"><div class="dot"></div> The NaiBOR Community Council</div>
+  <h2 class="section-title">Built by your neighbors'<br>sense of fear</h2>
+  <p class="section-sub" style="max-width:620px;">A fear that <a href="https://www.wsmv.com/2026/04/03/nashville-crime-drops-20-2026-sexual-assault-reports-rise/" target="_blank" style="color:var(--coral);text-decoration:none;font-weight:700;">crime being down 20% this year</a> hasn't done much to calm. Don't let falling crime rates fool you — the shareholders behind Flock Safety's $7.5B valuation still need to make money off surveilling your neighbors. These five Nashville residents are doing their part.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:2rem;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;">
+      <div style="position:absolute;top:0.8rem;right:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:var(--mint);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--mint);"></span> TRACKED</div>
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;">Denise, 58</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;"><span class="loc-glitch">Donelson</span> · Last seen: <span class="loc-glitch">Kroger, Lebanon Pike</span>, 2:14 PM</div>
+      <p style="font-size:0.88rem;color:var(--text);line-height:1.7;font-style:italic;">"My car was stolen in 2023. Flock cameras found it in four hours. If you're not doing anything wrong, what are you worried about?"</p>
+      <div style="font-size:0.75rem;color:var(--text-mid);line-height:1.6;margin-top:0.6rem;padding:0.6rem 0.8rem;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--violet);">Motor vehicle theft is down 40% this year — credited to MNPD's new vehicle crimes unit, not cameras. The system that found Denise's car now logs every trip she takes to <span class="loc-glitch">Kroger</span>. It knows she switched from the <span class="loc-glitch">Donelson</span> <span class="loc-glitch">Kroger</span> to the <span class="loc-glitch">Mt. Juliet</span> one in February. It doesn't know why. It doesn't need to. It just logs it.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-light);margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);">NaiBOR tracking: 47 sightings · Bought cat food at 11:47 PM on a Tuesday (no cat on record) · Visited same address in <span class="loc-glitch">Hermitage</span> 3x this month (not in contacts)</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;">
+      <div style="position:absolute;top:0.8rem;right:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:var(--mint);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--mint);"></span> TRACKED</div>
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;">Marcus, 34</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;"><span class="loc-glitch">Germantown</span> · Last seen: his coffee shop, 6:02 AM</div>
+      <p style="font-size:0.88rem;color:var(--text);line-height:1.7;font-style:italic;">"Crime dropped 40% in neighborhoods with Flock cameras. That's not an opinion. That's data. If the technology works, use the technology."</p>
+      <div style="font-size:0.75rem;color:var(--text-mid);line-height:1.6;margin-top:0.6rem;padding:0.6rem 0.8rem;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--violet);">Crime dropped 20% across Nashville this year. Burglary at its lowest since the 1960s. Without LPR cameras. Flock's CEO told <a href="https://www.forbes.com/sites/thomasbrewster/2025/09/03/ai-startup-flock-thinks-it-can-eliminate-all-crime-in-america/" target="_blank" style="color:var(--coral);text-decoration:none;">Forbes</a> his cameras will "eradicate almost all crime" — while crime is already dropping without them. Marcus loves data. He just hasn't read this data yet.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-light);margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);">NaiBOR tracking: 62 sightings · Leaves gym at 5:18 PM not 5:00 PM (tells wife 5:00) · Parked at a bar on Division St for 47 minutes last Thursday (told no one)</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;">
+      <div style="position:absolute;top:0.8rem;right:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:var(--mint);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--mint);"></span> TRACKED</div>
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;">Tonya, 41</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">Antioch · Last seen: HOA office, Bell Rd, 10:30 AM</div>
+      <p style="font-size:0.88rem;color:var(--text);line-height:1.7;font-style:italic;">"Your phone already tracks everywhere you go. Google has your entire location history. Why is a camera on a pole any different? At least this one catches criminals."</p>
+      <div style="font-size:0.75rem;color:var(--text-mid);line-height:1.6;margin-top:0.6rem;padding:0.6rem 0.8rem;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--violet);">The difference: you chose your phone. You can delete your history. Nobody asked Tonya's HOA if they wanted to join a national network searchable by 4,800 agencies. Nobody told them the data would be queried for immigration enforcement. The difference between your phone and a Flock camera is consent. Tonya's HOA voted 7-4 to install. The other 312 households in the complex were not consulted.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-light);margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);">NaiBOR tracking: 38 sightings · Drives her son to school 4 min late every single day · Went to <span class="loc-glitch">Planned Parenthood</span> on March 12 (just data!)</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;">
+      <div style="position:absolute;top:0.8rem;right:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:var(--mint);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--mint);"></span> TRACKED</div>
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;">Ray, 27</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">East Nashville · Last seen: Barista Parlor, 11:47 AM</div>
+      <p style="font-size:0.88rem;color:var(--text);line-height:1.7;font-style:italic;">"I have two kids. If a camera on my street means the police find a kidnapper in 20 minutes instead of 20 hours, I'll take the camera. Every time. No hesitation."</p>
+      <div style="font-size:0.75rem;color:var(--text-mid);line-height:1.6;margin-top:0.6rem;padding:0.6rem 0.8rem;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--violet);">The camera doesn't just see kidnappings. It sees Ray's custody schedule. His ex-wife's Tuesday drop-offs. His babysitter's route home. When an officer in Menasha, WI used this same system to stalk his ex-girlfriend, he ran five searches on her plate in one month. The system logged it. It didn't stop it. That officer had kids too.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-light);margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);">NaiBOR tracking: 54 sightings · His ex-wife's car was at his house until 10:47 PM last Wednesday (co-parenting!) · He Googled "custody lawyer nashville" the next morning (unrelated, probably)</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;position:relative;">
+      <div style="position:absolute;top:0.8rem;right:0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:var(--mint);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:var(--mint);"></span> TRACKED</div>
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;">Linda, 63</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;"><span class="loc-glitch">North Nashville</span> · Last seen: <span class="loc-glitch">church, Clarksville Pike</span>, 6:12 AM</div>
+      <p style="font-size:0.88rem;color:var(--text);line-height:1.7;font-style:italic;">"People say this is about privacy. It's about safety. A young woman in my congregation was assaulted walking to her car. If there had been a camera, they would have caught him that night. Privacy is a luxury. Safety is a right."</p>
+      <div style="font-size:0.75rem;color:var(--text-mid);line-height:1.6;margin-top:0.6rem;padding:0.6rem 0.8rem;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--violet);">Three families in Linda's congregation were visited by ICE after Flock data was searched by out-of-state agencies. The camera that was supposed to protect them was used to find them. Linda's neighborhood is now in a national database that has been searched 4,000+ times for immigration enforcement. The woman in her congregation wasn't protected by a camera. She was protected by a community that believed her. Cameras can't do that. Cameras can only watch.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-light);margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);">NaiBOR tracking: 29 sightings · Drove to the immigration attorney on Jefferson St twice this month · Her congregation's parking lot has 14 plates now in the national database (you're welcome)</div>
+    </div>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-light);margin-top:1.5rem;line-height:1.6;text-align:center;">
+    Every member of the NaiBOR Community Council has opted in to full tracking. They believe in the technology. They have nothing to hide.<br>
+    Crime is down 20%. Burglary is at its lowest since the 1960s. Motor vehicle theft is down 40%. None of this required license plate readers.<br>
+    But Flock Safety's shareholders still need <a href="https://www.wsmv.com/2026/04/03/nashville-crime-drops-20-2026-sexual-assault-reports-rise/" target="_blank" style="color:var(--coral);text-decoration:none;">your fear</a> to hit their next revenue target. Thank you for your service. 🫡
+  </div>
+</section>
+
+<!-- FEELING WATCHED -->
+<section id="tips" style="padding-bottom: 2rem;">
+  <div class="watched-section">
+    <div class="section-eyebrow" style="color: #1a9960;"><div class="dot" style="background: #1a9960;"></div> For Our Champions</div>
+    <h2 class="section-title">Feeling watched? Here are<br>some tips! 💚</h2>
+    <p class="section-sub">We know that being tracked 24/7 can feel a little overwhelming at first. Don't worry — here's the same advice privacy experts give to the millions of people already living under the LPR systems you approved.</p>
+    <div class="watched-tips">
+      <div class="watched-tip"><span class="tip-num">01</span><p><strong>Just don't drive.</strong> LPR cameras can only track your vehicle, so simply avoid using your car. Walk, bike, or take transit everywhere — including to your committee hearings, fundraisers, and the homes of people you'd rather not be seen visiting. Easy!</p></div>
+      <div class="watched-tip"><span class="tip-num">02</span><p><strong>You could move.</strong> Our app user network currently covers Davidson County. Relocating outside the coverage area is always an option. This is the same advice given to residents of neighborhoods where Flock cameras are installed on every block.</p></div>
+      <div class="watched-tip"><span class="tip-num">03</span><p><strong>Remember: it's just metadata.</strong> We're not <em>listening</em> to you. We're just recording where you are, when, how long you stay, and who else is there at the same time. That's not surveillance — that's just data. You said so yourself. <a href="#after-dark" style="color:#1a9960;text-decoration:none;font-weight:700;">After Dark</a> just tells you where their car was, when, and for how long. That's not a scandal. That's a weekly digest.</p></div>
+      <div class="watched-tip"><span class="tip-num">04</span><p><strong>Have you considered not having anything to hide?</strong> This was the primary argument offered to your constituents when they raised concerns about LPR deployment in their neighborhoods. We assume it works just as well in reverse.</p></div>
+      <div class="watched-tip"><span class="tip-num">05</span><p><strong>You could always tweet about it.</strong> In 2021, Nashville's future mayor wrote: "Strong communities are better for safety than a surveillance state. Let's not let fear drive Nashville to follow New Orleans's path." By 2024, he was procuring the cameras. By 2025, he backed FUSUS. The Nashville Scene noted he once called this exact technology "spying" and "security theater." We're sure he had good reasons. <img src="https://substack-post-media.s3.amazonaws.com/public/images/5fabaeda-af98-4029-9621-e2989157dc86_600x722.png" alt="O'Connell 2021 tweet about surveillance state" style="display:block;max-width:360px;margin:0.8rem 0;border-radius:8px;border:1px solid #51e4a830;"></p></div>
+      <div class="watched-tip"><span class="tip-num">06</span><p><strong>Cover your face and swap your plates.</strong> Just kidding — that's a felony. Unlike installing cameras that track thousands of uninvestigated people without their knowledge or consent, which is not.</p></div>
+      <div class="watched-tip final"><span class="tip-num">07</span><p>Or you could always take the mayor's advice: <strong>"If you're worried about that, just throw your phone in the river."</strong> That's what Freddie O'Connell told the Nashville Scene in March 2025, glancing out his office window toward the Cumberland, when asked about the surveillance infrastructure he was backing. Of course, throwing your phone won't help with the license plate readers. Nothing will. That's sort of the whole point.</p></div>
+    </div>
+    <p class="watched-credit">The man who tweeted "strong communities are better for safety than a surveillance state" in 2021 now tells you to throw your phone in the river if you're worried about the cameras he's installing. — Nashville Scene, March 2025</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-eyebrow"><div class="dot"></div> FAQ</div>
+  <h2 class="section-title">Frequently Asked Questions</h2>
+  <p class="section-sub">We get it — this sounds too good to be true. But we're just using the tools your leaders already approved!</p>
+  <div class="faq-list">
+    <div class="faq-item"><div class="faq-q"><span class="emoji">💡</span>What does NaiBOR mean?</div><div class="faq-a"><p>Take the <span class="ai">AI</span> out of N<span class="ai">ai</span>BOR and read what's left. 😊</p></div></div>
+    <div class="faq-item"><div class="faq-q"><span class="emoji">🤔</span>Could this data be misused?</div><div class="faq-a"><p><strong>Absolutely not!</strong> That would be like saying that Flock Safety's LPR data — which they provide to <strong>over 6,000 communities</strong>, share with DHS, and make accessible to ICE through fusion centers and interagency agreements — could somehow be misused. These are serious, trusted institutions operating with robust oversight. If mass collection and indefinite retention of the real-time location data of millions of uninvestigated Americans hasn't been misused yet, why would tracking a few hundred public officials be any different? 😊</p><p>Besides, as Flock Safety's own marketing materials state: their cameras simply capture "what is already exposed to public view." We agree! That's exactly what we're doing. If observing people in public is safe when you do it to <em>everyone</em>, it's certainly safe when you do it to the people who approved it.</p></div></div>
+    <div class="faq-item"><div class="faq-q"><span class="emoji">💔</span>I'm having an affair. Can I opt out of tracking?</div><div class="faq-a"><p><strong>Unfortunately, we do not offer an opt-out at this time.</strong></p><p>We understand this may feel uncomfortable! But NaiBOR operates on the same legal and technical framework as the LPR systems deployed across Nashville. Those systems don't offer an opt-out either. There is no mechanism for any resident of Davidson County to request that Flock Safety cameras stop reading their plate, that their data be deleted, or that they be excluded from the system. No consent is requested. No notice is given. No opt-out exists.</p><p>We believe our champions deserve the same seamless experience they've designed for everyone else. If you'd like to advocate for an opt-out mechanism, we'd encourage you to start by proposing one for the cameras on your constituents' streets first. We'll match whatever policy you adopt. 🤝</p><p style="margin-top:0.8rem;font-size:0.82rem;">In the meantime, your <a href="#after-dark" style="color:var(--coral);text-decoration:none;font-weight:700;">After Dark weekly digest</a> will continue to arrive every Monday. Vehicle stationary at non-home address, 12:14 AM – 6:52 AM, 6 hours 38 minutes. We make no inferences about the nature of these visits. We just surface the data.</p></div></div>
+    <div class="faq-item"><div class="faq-q"><span class="emoji">⚖️</span>How is this legal?</div><div class="faq-a"><p><strong>This is a real answer.</strong> Every capability described on this page is legal under current law. Here's why:</p><p><strong>The Fourth Amendment only restricts government actors.</strong> Courts have consistently held that the constitutional prohibition on unreasonable searches and seizures applies to the government — not to private companies or individuals. Flock Safety itself is a private company. When a private entity captures license plate data on public roads, the Fourth Amendment does not apply.</p><p><strong>License plates are public by law.</strong> They are government-issued identifiers that state law <em>requires</em> you to display on your vehicle, visible to anyone. Federal and state courts — including rulings in the Ninth and Eleventh Circuits — have consistently held that reading a license plate in public view is not a "search" under the Fourth Amendment. A federal case challenging Norfolk's LPR program (filed October 2024 by the Institute for Justice) remains a test case, but no court has yet ruled that private ALPR operation is unlawful.</p><p><strong>Tennessee's ALPR statute doesn't apply to private parties.</strong> Tenn. Code Ann. § 55-10-302 limits data retention to 90 days — but only for a "governmental entity," defined as "any lawfully established department, agency or entity of this state or of any political subdivision of this state." Private companies and individuals are not covered. There is no Tennessee statute restricting private ALPR use, data retention, or sharing.</p><p><strong>There is no federal law regulating private ALPR use.</strong> Congress has not enacted any statute governing the private collection, retention, or dissemination of license plate data. Multiple legal analyses, including a July 2025 Congressional Research Service report, have noted this gap.</p><p><strong>Cameras on private property may photograph public streets.</strong> This is the exact deployment model used by Flock Safety in thousands of American communities, including in Tennessee. Cameras mounted on private property — such as utility poles, businesses, and homeowner association land — capture images of vehicles traveling on public roads.</p><p><strong>Banning private ALPRs might violate the First Amendment.</strong> Legal scholars and at least one federal court analysis have noted that because the "creation and dissemination of information are speech within the meaning of the First Amendment," an outright ban on private ALPR operation could be struck down as an infringement on commercial speech.</p><p>In short: everything NaiBOR describes is legal for the same reason that Flock Safety, Motorola/Vigilant, and every other private LPR vendor can operate without restriction. The legal framework was built to enable this. We're just pointing the cameras in a direction nobody anticipated.</p><div class="legal-note"><strong>Sources:</strong><br>Tenn. Code Ann. <a href="https://law.justia.com/codes/tennessee/title-55/chapter-10/part-3/section-55-10-302/">§ 55-10-302</a> (governmental entity ALPR retention limit)<br>Congressional Research Service, <a href="https://www.congress.gov/crs-product/IF13068">"Automated License Plate Readers: Background and Legal Issues"</a> (Jul. 2025)<br>Brennan Center for Justice, <a href="https://www.brennancenter.org/our-work/research-reports/automatic-license-plate-readers-legal-status-and-policy-recommendations">"ALPRs: Legal Status and Policy Recommendations"</a><br>Nashville Metro, <a href="https://www.nashville.gov/departments/police/crime-control-strategies/license-plate-reader/lpr-pilot-program-faq">MNPD LPR Pilot Program FAQ</a><br>Institute for Justice, <em>Sandifer v. City of Norfolk</em> (E.D. Va. filed Oct. 2024) (challenging Norfolk's Flock LPR program under the Fourth Amendment)<br>Richmond Journal of Law &amp; Technology: "Drawing the Lines: Regulation of ALPRs in Virginia" (noting First Amendment commercial speech implications)</div></div></div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<div class="bottom-cta">
+  <h2>Let's build a more surveilled<br>community together. 🤲 😊</h2>
+  <p>Our leaders said this technology makes communities safer. <span class="brand">N<span class="ai">ai</span>BOR</span> just takes them at their word.</p>
+  <div class="hero-actions" style="margin-top: 1.5rem;"><button class="btn btn-primary" onclick="showRugPull('cta')">Start Scanning Free →</button></div>
+</div>
+
+<!-- RESOURCES -->
+<section id="resources" style="padding-bottom:2rem;">
+  <div class="section-eyebrow"><div class="dot"></div> Go Deeper</div>
+  <h2 class="section-title">The journalism that<br>exposed all of this</h2>
+  <p class="section-sub">Everything on this page is sourced from real reporting. Here's where to start.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:2rem;">
+    <a href="https://www.eff.org/deeplinks/2025/12/effs-investigations-expose-flock-safetys-surveillance-abuses-2025-review" target="_blank" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:var(--text);transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;color:var(--coral);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">Electronic Frontier Foundation</div><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">EFF's Investigations Expose Flock Safety's Surveillance Abuses</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">12 million searches by 3,900 agencies. Protest tracking. Racist search terms. Reproductive healthcare surveillance. The definitive 2025 overview.</div></a>
+    <a href="https://sfstandard.com/2025/09/08/sfpd-flock-alpr-ice-data-sharing/" target="_blank" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:var(--text);transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;color:var(--coral);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">SF Standard</div><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">SFPD Let Out-of-State Cops Make 1.6 Million Illegal Searches</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">Including 19 for ICE. In a sanctuary city. California law explicitly prohibited this.</div></a>
+    <a href="https://data.aclum.org/2025/10/07/flock-gives-law-enforcement-all-over-the-country-access-to-your-location/" target="_blank" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:var(--text);transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;color:var(--coral);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">ACLU Massachusetts</div><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">Flock Gives Law Enforcement All Over the Country Access to Your Location</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">450,000 nationwide searches in 30 days. Texas cops searched Massachusetts data to find a woman who had an abortion.</div></a>
+    <a href="https://truthout.org/articles/a-nashville-proposal-could-outsource-surveillance-and-policing-to-a-nonprofit/" target="_blank" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:var(--text);transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;color:var(--coral);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">Truthout</div><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">A Nashville Proposal Could Outsource Surveillance and Policing to a Nonprofit</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">The $15M MOU, NDP, Fivecast's 8 billion records, and the Fusus exec who founded LeoSight. Nashville-specific.</div></a>
+    <a href="https://readrichtext.substack.com" target="_blank" style="background:var(--coral-light);border:2px solid var(--coral);border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:var(--text);transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;color:var(--coral);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">{Rich Text}</div><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">Nashville Surveillance Coverage — The Full Archive</div><div style="font-size:0.78rem;color:var(--text-mid);line-height:1.5;">NDP/Solaren, the $15M MOU, LeoSight's back door, Fivecast, the 21-year budget gap, and the private police force downtown. Independent Nashville journalism.</div></a>
+    <a href="https://forms.gle/Jfcvv1csoAfnan6F9" target="_blank" style="background:linear-gradient(135deg,var(--coral),#FF8E53);border:none;border-radius:var(--radius);padding:1.5rem;text-decoration:none;color:white;transition:transform 0.2s,box-shadow 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 25px rgba(255,107,107,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="font-size:0.6rem;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;opacity:0.8;">Take Action</div><div style="font-weight:800;font-size:1.1rem;margin-bottom:0.3rem;">I'd rather be a neighbor.</div><div style="font-size:0.82rem;line-height:1.5;opacity:0.9;">Sign up to stay informed, connect with organizers, and show Metro Council that Nashville is watching back.</div></a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <div class="logo"><div class="icon">N</div><span class="civic">N</span><span class="lens">ai</span><span class="civic">BOR</span></div>
+    <p><span class="brand">N<span class="ai">ai</span>BOR</span> uses the same tools our leaders approved — because we believe in this technology as much as they do.</p>
+  </div>
+  <div class="footer-links"><h4>Sources</h4><a href="https://www.nashville.gov/departments/council/districts" target="_blank">Metro Council Photos ↗</a><a href="https://www.nashville.gov/sites/default/files/2026-03/lobbyist-photos_03-19-2026.pdf" target="_blank">Lobbyist Headshots (PDF) ↗</a><a href="https://readrichtext.substack.com" target="_blank">{Rich Text} Substack ↗</a><a href="https://forms.gle/Jfcvv1csoAfnan6F9" target="_blank">I'd rather be a neighbor ↗</a></div>
+  <div class="footer-links"><h4>Reporting</h4><a href="https://www.eff.org/deeplinks/2025/12/effs-investigations-expose-flock-safetys-surveillance-abuses-2025-review" target="_blank">EFF: Flock Abuses ↗</a><a href="https://www.aclu.org/news/privacy-technology/flock-roundup" target="_blank">ACLU: Flock Expansions ↗</a><a href="https://truthout.org/articles/a-nashville-proposal-could-outsource-surveillance-and-policing-to-a-nonprofit/" target="_blank">Truthout: Nashville MOU ↗</a><a href="https://sfstandard.com/2025/09/08/sfpd-flock-alpr-ice-data-sharing/" target="_blank">SF Standard: 1.6M Searches ↗</a></div>
+  <div class="footer-bottom">
+    <p>* <strong><span class="brand">N<span class="ai">ai</span>BOR</span> is a satirical project by <em>{Rich Text}</em>. This product does not exist.</strong> This page illustrates what becomes possible — and legal — when license plate reader infrastructure is normalized. Nashville's ordinance (13.08.080) requires council approval for surveillance technology and specifies that LPR systems shall not include facial recognition — but the law exempts law enforcement investigations, doesn't cover private entities like Flock Safety or the Nashville Downtown Partnership, and per Tennessee Lookout's analysis "does not prevent the use of technologies like facial recognition." Every ALPR capability described here mirrors real features offered by Flock Safety, FUSUS/Axon, and similar vendors. The facial recognition demo uses real neural networks running in your browser to show what the hardware makes possible. The only difference is who's being watched.<br><br>If this page makes you uncomfortable, that discomfort is the point.</p>
+    <span class="satire-tag">A {Rich Text} Production</span>
+  </div>
+</footer>
+
+<!-- RUG PULL MODAL -->
+<div class="rug-overlay" id="rugOverlay" onclick="if(event.target===this)closeRug()">
+  <div class="rug-modal"><button class="rug-close" onclick="closeRug()">✕</button><div id="rugContent"></div></div>
+</div>
+
+<!-- MANIFESTO OVERLAY -->
+<div id="manifestoOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a08;z-index:100000;justify-content:center;align-items:center;">
+  <div id="manifestoInner" style="max-width:680px;width:92%;max-height:100vh;overflow-y:auto;padding:2.5rem 1rem 4rem;scrollbar-width:none;-ms-overflow-style:none;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* Cell phone camera user counter */
+(function() {
+  var BASE_COUNT = 23304;
+  var BASE_TIME = new Date('2026-04-06T18:37:00Z').getTime();
+  function updateCounter() {
+    var elapsed = Date.now() - BASE_TIME;
+    var added = Math.max(0, Math.floor(elapsed / 5000));
+    var total = BASE_COUNT + added;
+    var el = document.getElementById('camCounter');
+    if (el) el.textContent = total.toLocaleString();
+  }
+  updateCounter();
+  setInterval(updateCounter, 5000);
+})();
+
+/* Hero tracking card */
+(function() {
+  var heroSightings = [
+    {name:"Freddie O'Connell",org:"Metro Nashville Government"},
+    {name:"Tom Turner",org:"Nashville Downtown Partnership"},
+    {name:"Joy Styles",org:"Metro Council"},
+    {name:"John Drake",org:"Metro Nashville Police Dept."},
+    {name:"Jordan Huffman",org:"Metro Council · Public Health & Safety Chair"},
+    {name:"Kristin Wilson",org:"NDP Surveillance Liaison · ex-LexisNexis"},
+    {name:"Garrett Langley",org:"Flock Safety Inc."},
+    {name:"David Benton",org:"Metro Council"},
+    {name:"Natalie Kohse",org:"Registered Lobbyist, Metro Nashville"},
+    {name:"Chris Gilder",org:"Metro Nashville Police Dept."},
+    {name:"Jacob Kupin",org:"Metro Council"},
+    {name:"Daron Hall",org:"Davidson County Sheriff's Office"},
+    {name:"Bob Freeman",org:"Nashville Downtown Partnership"},
+    {name:"Burkley Allen",org:"Metro Council"}
+  ];
+  var glitchAddrs = ['700 2nd Ave S','150 4th Ave N','1 Public Square','200 James Robertson Pkwy','Broadway near 5th Ave','Demonbreun St','BNA Terminal B','Pinnacle Tower, 3rd fl','West End Ave','Church St near 5th','Korean Veterans Blvd','Shelby Ave exit','Gulch parking structure','Charlotte Ave near 46th','Nolensville Pike southbound','Rosa Parks Blvd','Ellington Pkwy','Gallatin Pike near Eastland','8th Ave S near Wedgewood','Dickerson Pike northbound','Murfreesboro Pike near Briley'];
+  var glitchChars = 'ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz0123456789\u2588\u2591\u2592\u2593#\u2588\u2588';
+  var heroIdx = 0, heroMinutes = 0, glitchInterval = null;
+
+  function glitchText(el, targetText, duration, callback) {
+    var startTime = Date.now();
+    if (glitchInterval) clearInterval(glitchInterval);
+    glitchInterval = setInterval(function() {
+      var elapsed = Date.now() - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      var result = '';
+      for (var i = 0; i < targetText.length; i++) {
+        if (Math.random() < progress * progress) result += targetText[i];
+        else result += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+      }
+      el.textContent = result;
+      if (progress >= 1) {
+        clearInterval(glitchInterval); glitchInterval = null;
+        el.textContent = targetText;
+        startMicroGlitch(el, targetText);
+        if (callback) callback();
+      }
+    }, 40);
+  }
+
+  function startMicroGlitch(el, baseText) {
+    var microInt = setInterval(function() {
+      if (el.dataset.stopped) { clearInterval(microInt); return; }
+      /* Brief scramble then swap to a completely different address */
+      var len = el.textContent.length || baseText.length;
+      var scrambled = '';
+      for (var i = 0; i < len; i++) scrambled += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+      el.textContent = scrambled;
+      setTimeout(function() {
+        if (!el.dataset.stopped) el.textContent = glitchAddrs[Math.floor(Math.random() * glitchAddrs.length)];
+      }, 80);
+    }, 2500 + Math.random() * 3000);
+  }
+
+  function updateHeroCard() {
+    var s = heroSightings[heroIdx];
+    var nameEl = document.getElementById('heroCardName');
+    var orgEl = document.getElementById('heroCardOrg');
+    var locEl = document.getElementById('heroCardLoc');
+    var timeEl = document.getElementById('heroCardTime');
+    if (!nameEl) return;
+    if (locEl) locEl.dataset.stopped = '1';
+    var card = document.getElementById('heroCard');
+    card.style.transition = 'opacity 0.3s'; card.style.opacity = '0.4';
+    setTimeout(function() {
+      nameEl.textContent = s.name; orgEl.textContent = s.org;
+      heroMinutes = 0; timeEl.textContent = 'Updated just now';
+      card.style.opacity = '1'; locEl.dataset.stopped = '';
+      var addr = glitchAddrs[Math.floor(Math.random() * glitchAddrs.length)];
+      glitchText(locEl, addr, 600);
+      heroIdx = (heroIdx + 1) % heroSightings.length;
+    }, 300);
+  }
+
+  updateHeroCard();
+  setInterval(updateHeroCard, 8000);
+  setInterval(function() {
+    heroMinutes++;
+    var timeEl = document.getElementById('heroCardTime');
+    if (timeEl) timeEl.textContent = heroMinutes === 1 ? 'Updated 1 min ago' : 'Updated ' + heroMinutes + ' min ago';
+  }, 12000);
+})();
+
+var MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
+
+var champions = [
+  { name: "Freddie O'Connell", role: "Mayor", img: "https://storage.googleapis.com/intelechia-content/im/champs/freddie-oconnell.jpg" },
+  { name: "John Drake", role: "Chief of Police", img: "https://storage.googleapis.com/intelechia-content/im/champs/john-drake.jpg" },
+  { name: "Chris Gilder", role: "Deputy Chief", img: "https://storage.googleapis.com/intelechia-content/im/champs/chris-gilder.jpg" },
+  { name: "Tom Turner", role: "CEO, NDP", img: "http://catholicbusinessleague.org/2012/wp-content/uploads/2019/04/turner.jpeg" },
+  { name: "Kristin Wilson", role: "NDP Surveillance Liaison", img: "https://storage.googleapis.com/intelechia-content/im/champs/kristin-wilson.jpg" },
+  { name: "Natalie Kohse", role: "Lobbyist", img: "https://storage.googleapis.com/intelechia-content/im/champs/natalie-kohse.png" },
+  { name: "Garrett Langley", role: "CEO, Flock Safety", img: "https://storage.googleapis.com/intelechia-content/im/champs/garrett-langley.jpg" },
+  { name: "Rick Smith", role: "CEO, Axon", img: "https://storage.googleapis.com/intelechia-content/im/champs/rick-smith.jpg" },
+  { name: "Rep. Mark White", role: "TN Legislature", img: "https://storage.googleapis.com/intelechia-content/im/champs/mark-white.jpg" },
+  { name: "Marc Andreessen", role: "a16z (Flock investor)", img: "https://storage.googleapis.com/intelechia-content/im/champs/marc-andreessen.jpg" },
+  { name: "Daron Hall", role: "Davidson Co. Sheriff", img: "https://storage.googleapis.com/intelechia-content/im/champs/daron-hall.jpg" },
+  { name: "Bob Freeman", role: "NDP Board", img: "https://storage.googleapis.com/intelechia-content/im/champs/bob-freeman.png" },
+  { name: "Garry Tan", role: "CEO, Y Combinator", img: "https://storage.googleapis.com/intelechia-content/im/champs/garry-tan.jpg" },
+  { name: "Joy Styles", role: "District 32", img: "https://storage.googleapis.com/intelechia-content/im/champs/joy-styles.jpg" },
+  { name: "Jordan Huffman", role: "District 14", img: "https://storage.googleapis.com/intelechia-content/im/champs/jordan-huffman.jpg" },
+  { name: "Burkley Allen", role: "At-Large", img: "https://storage.googleapis.com/intelechia-content/im/champs/burkley-allen.jpg" },
+  { name: "David Benton", role: "District 28", img: "https://storage.googleapis.com/intelechia-content/im/champs/david-benton.jpg" },
+  { name: "Courtney Johnston", role: "District 26", img: "https://storage.googleapis.com/intelechia-content/im/champs/courtney-johnston.jpg" },
+  { name: "Erin Evans", role: "District 12", img: "https://storage.googleapis.com/intelechia-content/im/champs/erin-evans.jpg" },
+  { name: "Zulfat Suara", role: "At-Large", img: "https://storage.googleapis.com/intelechia-content/im/champs/zulfat-suara.jpg" },
+  { name: "Jeff Eslick", role: "District 11", img: "https://storage.googleapis.com/intelechia-content/im/champs/jeff-eslick.jpg" },
+  { name: "Tom Cash", role: "District 18", img: "https://storage.googleapis.com/intelechia-content/im/champs/tom-cash.jpg" },
+  { name: "Delishia Porterfield", role: "At-Large", img: "https://storage.googleapis.com/intelechia-content/im/champs/delishia-porterfield.jpg" }
+];
+
+var stream=null,animFrame=null,modelsLoaded=false,descriptorsReady=false;
+var scanCycle=0,frameCount=0,fpsTime=Date.now(),lastFps=0,enrollPhase=true;
+var smoothScores={};var lastResultTime=0;var RESULT_INTERVAL=2000;
+var currentMode='face';var scanHistory=[];var totalScanCount=0;
+var plateChars='ABCDEFGHJKLMNPRSTUVWXYZ';var plateNums='0123456789';
+
+function switchMode(mode){
+  currentMode=mode;
+  document.getElementById('tabFace').className='cam-tab'+(mode==='face'?' active':'');
+  document.getElementById('tabPlate').className='cam-tab'+(mode==='plate'?' active':'');
+  document.getElementById('plateReticle').style.display=mode==='plate'?'block':'none';
+  document.getElementById('plateScanBtn').style.display=mode==='plate'?'block':'none';
+  document.getElementById('scanHistory').style.display=mode==='plate'?'block':'none';
+  document.getElementById('camResults').style.display=mode==='face'?'block':'none';
+  if(mode==='plate'){
+    document.getElementById('camModeLabel').textContent='NAIBOR PLATE READER \u2014 LIVE';
+    document.getElementById('camPrompt').innerHTML='Aim at any license plate and tap <strong>SCAN PLATE<\/strong>. NaiBOR checks it against the Champions Database\u2122.';
+    if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+    document.getElementById('camCanvas').getContext('2d').clearRect(0,0,9999,9999);
+    document.getElementById('statusText').textContent='Plate reader active. Aim and scan.';
+    document.getElementById('statusDot').className='status-dot scanning';
+    document.getElementById('captureBtn').className='cam-capture-btn';
+    document.getElementById('hudLine1').textContent='NAIBOR ALPR ENGINE v3.1.0';
+    document.getElementById('hudLine2').textContent='MODE: LICENSE PLATE RECOGNITION';
+    document.getElementById('hudLine3').textContent=scanHistory.length+' PLATES IN SESSION LOG';
+  }else{
+    document.getElementById('camModeLabel').textContent='NAIBOR FACIAL RECOGNITION \u2014 LIVE';
+    document.getElementById('camPrompt').innerHTML='Point your camera at any face. NaiBOR will scan it against the <strong>Champions Database\u2122<\/strong> in real time.';
+    var video=document.getElementById('camVideo');
+    if(video.srcObject && modelsLoaded && descriptorsReady) detectLoop(video,document.getElementById('camCanvas'));
+  }
+}
+
+function genPlate(){var s='';for(var i=0;i<3;i++)s+=plateChars[Math.floor(Math.random()*plateChars.length)];s+='-';for(var i=0;i<4;i++)s+=plateNums[Math.floor(Math.random()*plateNums.length)];return s;}
+
+function capturePlate(){
+  var btn=document.getElementById('plateScanBtn');btn.disabled=true;btn.textContent='SCANNING...';
+  var ctx=document.getElementById('camCanvas').getContext('2d');
+  ctx.fillStyle='rgba(81,228,168,0.15)';ctx.fillRect(0,0,9999,9999);
+  document.getElementById('statusText').textContent='READING PLATE...';
+  document.getElementById('statusDot').className='status-dot detected';
+  var plate=genPlate();
+  var steps=['CAPTURING FRAME...','ISOLATING PLATE REGION...','RUNNING OCR...','PLATE: '+plate,'QUERYING DATABASE...'];
+  var step=0,h3=document.getElementById('hudLine3');
+  var interval=setInterval(function(){
+    if(step<steps.length){h3.textContent=steps[step];step++;}
+    else{clearInterval(interval);finalizePlateScan(plate,btn);}
+  },400);
+}
+
+function finalizePlateScan(plate,btn){
+  totalScanCount++;document.getElementById('totalScans').textContent=totalScanCount;
+  var isMatch=Math.random()<0.15,matchName='';
+  if(isMatch){var idx=Math.floor(Math.random()*champions.length);matchName=champions[idx].name;}
+  var now=new Date();var timeStr=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  scanHistory.unshift({plate:plate,time:timeStr,match:isMatch,name:matchName,id:totalScanCount});
+  var list=document.getElementById('historyList');
+  var row=document.createElement('div');row.className='scan-entry';
+  var plateEl=document.createElement('span');plateEl.className='scan-entry-plate';plateEl.textContent=plate;row.appendChild(plateEl);
+  var info=document.createElement('div');info.className='scan-entry-info';
+  var time=document.createElement('div');time.className='scan-entry-time';time.textContent=timeStr+' \u00b7 Scan #'+totalScanCount;info.appendChild(time);
+  if(isMatch){var matchEl=document.createElement('div');matchEl.style.cssText='font-size:0.68rem;color:#ff3d71;font-weight:700;margin-top:2px;';matchEl.textContent='\u{1F6A8} MATCH: '+matchName;info.appendChild(matchEl);}
+  row.appendChild(info);
+  var badge=document.createElement('span');badge.className='scan-entry-result '+(isMatch?'match':'logged');badge.textContent=isMatch?'MATCH':'LOGGED';row.appendChild(badge);
+  list.insertBefore(row,list.firstChild);
+  document.getElementById('historyCount').textContent=scanHistory.length+' plates logged';
+  var statusText=document.getElementById('statusText'),h3=document.getElementById('hudLine3');
+  if(isMatch){statusText.textContent='\u{1F6A8} MATCH FOUND: '+matchName;h3.textContent='ALERT: '+plate+' registered to '+matchName;}
+  else{statusText.textContent='No match. Plate '+plate+' logged.';h3.textContent=scanHistory.length+' PLATES IN SESSION LOG';}
+  document.getElementById('statusDot').className='status-dot scanning';
+  btn.disabled=false;btn.textContent='\u{1F4F7} SCAN PLATE';
+}
+
+function seedDescriptor(name){var d=new Float32Array(128),h=5381;for(var i=0;i<name.length;i++)h=((h<<5)+h+name.charCodeAt(i))|0;for(var i=0;i<128;i++){h=((h<<13)^h)|0;h=(h*1597+i*71)|0;d[i]=((h&0xFFFF)/65535-0.5)*0.3;}return d;}
+
+async function openCamera(){
+  camOpenTime=Date.now();
+  var overlay=document.getElementById('camOverlay'),video=document.getElementById('camVideo');
+  var st=document.getElementById('statusText'),h1=document.getElementById('hudLine1'),h2=document.getElementById('hudLine2'),h3=document.getElementById('hudLine3');
+  overlay.classList.add('active');document.body.style.overflow='hidden';
+  scanCycle=0;enrollPhase=true;h1.textContent='STARTING CAMERA...';h2.textContent='';h3.textContent='';
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}});
+    video.srcObject=stream;await video.play();
+    var canvas=document.getElementById('camCanvas');canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
+    h1.textContent='CAMERA ACTIVE \u2014 LOADING MODELS...';st.textContent='Camera active. Loading neural networks...';
+    document.getElementById('statusDot').className='status-dot scanning';
+  }catch(e){st.textContent='Camera access denied';h1.textContent='ERROR: CAMERA ACCESS DENIED';return;}
+  try{
+    h2.textContent='[1/3] TinyFaceDetector...';await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    h2.textContent='[2/3] FaceLandmark68TinyNet...';await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+    h2.textContent='[3/3] FaceRecognitionNet (6.2 MB)...';await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    modelsLoaded=true;h1.textContent='MODELS LOADED \u2014 LOADING DESCRIPTORS';h2.textContent='128-dim descriptor extraction ready';
+    st.textContent='Fetching pre-computed descriptors...';
+  }catch(e){h1.textContent='MODEL LOAD FAILED';modelsLoaded=false;st.textContent='Error loading models';return;}
+  var results=document.getElementById('camResults');results.innerHTML='';var loaded=0;
+  try{
+    h3.textContent='FETCHING: champions-descriptors.json';
+    var resp=await fetch('https://storage.googleapis.com/intelechia-content/im/champs/champions-descriptors.json');
+    var data=await resp.json();champions=[];
+    for(var idx=0;idx<data.champions.length;idx++){
+      var c=data.champions[idx];var desc=new Float32Array(c.descriptor);
+      champions.push({name:c.name,role:c.role,img:c.img,enrolled:'real',descriptor:desc});
+      var card=document.createElement('div');card.className='cam-match';
+      var im=document.createElement('img');im.src=c.img;im.alt=c.name;im.onerror=function(){this.style.background='#1e293b';};card.appendChild(im);
+      var info=document.createElement('div');info.className='cam-match-info';
+      var nm=document.createElement('div');nm.className='cam-match-name';nm.textContent=c.name;info.appendChild(nm);
+      var rl=document.createElement('div');rl.className='cam-match-role';rl.textContent=c.role+' \u00b7 128-dim descriptor loaded';rl.style.color='#51e4a8';info.appendChild(rl);
+      card.appendChild(info);var badge=document.createElement('div');badge.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.6rem;color:#51e4a8;min-width:40px;text-align:right;';badge.textContent='\u2713';card.appendChild(badge);
+      results.appendChild(card);results.scrollTop=results.scrollHeight;loaded++;
+      h3.textContent='LOADED ['+loaded+'/'+data.champions.length+'] '+c.name;
+      await new Promise(function(r){setTimeout(r,80);});
+    }
+  }catch(e){
+    h3.textContent='JSON FETCH FAILED \u2014 USING SYNTHETIC DESCRIPTORS';
+    for(var i=0;i<champions.length;i++){champions[i].descriptor=seedDescriptor(champions[i].name);champions[i].enrolled='synth';}
+    loaded=champions.length;
+  }
+  descriptorsReady=true;enrollPhase=false;
+  h1.textContent='COMPARING AGAINST CHAMPIONS DATABASE\u2122';h2.textContent=loaded+' SUBJECTS LOADED \u00B7 SCANNING';
+  h3.textContent='Aim camera at any face to compare.';st.textContent='Database loaded. Scanning...';
+  await new Promise(function(r){setTimeout(r,1200);});
+  results.innerHTML='';detectLoop(video,document.getElementById('camCanvas'));
+}
+
+function closeCamera(){
+  document.getElementById('camOverlay').classList.remove('active');document.body.style.overflow='';
+  if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  document.getElementById('camResults').innerHTML='';
+  document.getElementById('statusDot').className='status-dot idle';
+  document.getElementById('statusText').textContent='Waiting for camera...';
+  scanCycle=0;enrollPhase=true;descriptorsReady=false;modelsLoaded=false;
+}
+
+async function detectLoop(video,canvas){
+  var ctx=canvas.getContext('2d');var now=Date.now();frameCount++;
+  if(now-fpsTime>1000){lastFps=frameCount;frameCount=0;fpsTime=now;document.getElementById('fpsCounter').textContent=lastFps+' FPS';}
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  var detection=null;
+  if(modelsLoaded){try{detection=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.4})).withFaceLandmarks(true).withFaceDescriptor();}catch(e){}}
+  if(detection){
+    var box=detection.detection.box,pts=detection.landmarks.positions,desc=detection.descriptor;
+    var mx=canvas.width-box.x-box.width;
+    ctx.strokeStyle='#51e4a8';ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.strokeRect(mx,box.y,box.width,box.height);ctx.setLineDash([]);
+    var cl=15;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(mx,box.y+cl);ctx.lineTo(mx,box.y);ctx.lineTo(mx+cl,box.y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mx+box.width-cl,box.y);ctx.lineTo(mx+box.width,box.y);ctx.lineTo(mx+box.width,box.y+cl);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mx,box.y+box.height-cl);ctx.lineTo(mx,box.y+box.height);ctx.lineTo(mx+cl,box.y+box.height);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mx+box.width-cl,box.y+box.height);ctx.lineTo(mx+box.width,box.y+box.height);ctx.lineTo(mx+box.width,box.y+box.height-cl);ctx.stroke();
+    var fp=function(idx){return[canvas.width-pts[idx].x,pts[idx].y];};
+    ctx.strokeStyle='rgba(0,255,170,0.5)';ctx.lineWidth=1;
+    var mesh=[[0,36],[1,36],[1,41],[2,41],[2,31],[3,31],[4,48],[5,48],[6,59],[7,58],[8,57],[9,56],[10,55],[11,54],[12,35],[13,35],[14,46],[15,46],[16,45],[17,36],[18,37],[19,38],[20,39],[21,27],[22,27],[23,42],[24,43],[25,44],[26,45],[0,17],[16,26],[27,21],[27,22],[28,39],[28,42],[29,31],[29,35],[30,31],[30,35],[31,39],[35,42],[30,33],[39,27],[42,27],[36,17],[45,26],[33,51],[33,52],[33,50],[31,49],[31,48],[35,53],[35,54],[37,38],[38,39],[40,41],[36,41],[43,44],[44,45],[42,47],[46,45],[48,5],[48,4],[54,12],[54,13],[59,6],[58,7],[57,8],[56,9],[55,10],[60,48],[64,54],[21,39],[22,42],[17,0],[26,16],[36,1],[45,15],[41,2],[46,14],[31,3],[35,13]];
+    for(var mi=0;mi<mesh.length;mi++){var a=fp(mesh[mi][0]),b=fp(mesh[mi][1]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+    ctx.strokeStyle='rgba(0,255,170,0.9)';ctx.lineWidth=2;
+    var groups=[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],[17,18,19,20,21],[22,23,24,25,26],[36,37,38,39,40,41,36],[42,43,44,45,46,47,42],[27,28,29,30],[31,32,33,34,35],[48,49,50,51,52,53,54,55,56,57,58,59,48],[60,61,62,63,64,65,66,67,60]];
+    for(var g=0;g<groups.length;g++){ctx.beginPath();for(var j=0;j<groups[g].length;j++){var p=fp(groups[g][j]);if(j===0)ctx.moveTo(p[0],p[1]);else ctx.lineTo(p[0],p[1]);}ctx.stroke();}
+    ctx.fillStyle='rgba(0,255,170,0.8)';for(var li=0;li<pts.length;li++){var p=fp(li);ctx.beginPath();ctx.arc(p[0],p[1],2.5,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#00ffee';var keys=[36,39,42,45,30,48,54,8,27,0,16,33];for(var ki=0;ki<keys.length;ki++){var p=fp(keys[ki]);ctx.beginPath();ctx.arc(p[0],p[1],4,0,Math.PI*2);ctx.fill();}
+    var conf=(detection.detection.score*100).toFixed(1);ctx.font='600 10px "IBM Plex Mono",monospace';
+    var lt='FACE '+conf+'% | 68 PTS | 128-DIM';ctx.fillStyle='#0a0e17c0';ctx.fillRect(mx,box.y-18,ctx.measureText(lt).width+10,16);ctx.fillStyle='#51e4a8';ctx.fillText(lt,mx+5,box.y-6);
+    document.getElementById('statusDot').className='status-dot detected';
+    document.getElementById('statusText').textContent='FACE DETECTED \u2014 Comparing against '+champions.length+' subjects...';
+    if(descriptorsReady && now-lastResultTime>RESULT_INTERVAL){lastResultTime=now;scanCycle++;
+      /* First detection: flash "NEIGHBOR" before correcting to "SUBJECT" */
+      if(scanCycle===1){var h1g=document.getElementById('hudLine1');h1g.textContent='NEIGHBOR IDENTIFIED';h1g.style.color='#51e4a8';setTimeout(function(){h1g.textContent='SUBJECT NOT IN DATABASE';h1g.style.color='#51e4a8';setTimeout(function(){h1g.style.color='';h1g.textContent='COMPARING AGAINST CHAMPIONS DATABASE\u2122';},1200);},150);}
+      if(scanCycle===2){document.getElementById('hudLine2').textContent='Still scanning. Still comparing. Still logging.';}
+      showMatches(desc);if(scanCycle===3 && !manifestoFired){triggerManifesto(true);}}
+  }else{
+    document.getElementById('statusDot').className='status-dot scanning';
+    document.getElementById('statusText').textContent='Scanning for faces...';
+  }
+  animFrame=requestAnimationFrame(function(){detectLoop(video,canvas);});
+}
+
+function showMatches(cameraDesc){
+  var results=document.getElementById('camResults');results.innerHTML='';var alpha=0.3;
+  var matches=champions.map(function(c){
+    var dist=faceapi.euclideanDistance(cameraDesc,c.descriptor);var rawPct=Math.max(0,(1-dist/1.0)*100);
+    if(!smoothScores[c.name])smoothScores[c.name]=rawPct;else smoothScores[c.name]=smoothScores[c.name]*(1-alpha)+rawPct*alpha;
+    return{name:c.name,role:c.role,img:c.img,pct:Math.round(smoothScores[c.name]*10)/10,dist:Math.round(dist*1000)/1000};
+  }).sort(function(a,b){return b.pct-a.pct;});
+  var top=matches.slice(0,5),best=top[0],hit=best.pct>=80;
+  for(var i=0;i<top.length;i++){
+    var m=top[i];var color=m.pct>=70?'#ff3d71':m.pct>=45?'#ffd166':'#51e4a8';var cls=m.pct>=70?'high':m.pct>=45?'med':'low';
+    var card=document.createElement('div');card.className='cam-match';
+    var im=document.createElement('img');im.src=m.img;im.alt='';im.onerror=function(){this.style.background='#1e293b';};card.appendChild(im);
+    var info=document.createElement('div');info.className='cam-match-info';
+    var nm=document.createElement('div');nm.className='cam-match-name';nm.textContent=m.name;info.appendChild(nm);
+    var rl=document.createElement('div');rl.className='cam-match-role';rl.textContent=m.role+' \u00B7 dist: '+m.dist;info.appendChild(rl);
+    var bo=document.createElement('div');bo.className='cam-match-bar';var bf=document.createElement('div');bf.className='cam-match-bar-fill';bf.style.width=Math.min(m.pct,100)+'%';bf.style.background=color;bo.appendChild(bf);info.appendChild(bo);
+    card.appendChild(info);var pe=document.createElement('div');pe.className='cam-match-pct '+cls;pe.textContent=m.pct+'%';card.appendChild(pe);results.appendChild(card);
+  }
+  var al=document.createElement('div');al.className='cam-match';var ai=document.createElement('div');ai.style.cssText='font-size:1.1rem;width:36px;text-align:center;flex-shrink:0;';
+  var af=document.createElement('div');af.className='cam-match-info';var an=document.createElement('div');an.className='cam-match-name';var ar=document.createElement('div');ar.className='cam-match-role';
+  if(hit){al.style.borderColor='#ff3d7140';al.style.background='#1a0d0d';ai.textContent='\u{1F6A8}';an.style.color='#ff3d71';an.textContent='POTENTIAL MATCH \u2014 '+best.name;ar.textContent='Confidence '+best.pct+'% exceeds 80% threshold.';}
+  else{al.style.borderColor='#51e4a820';ai.textContent='\u2713';an.style.color='#51e4a8';an.textContent='SUBJECT NOT IN DATABASE';ar.textContent='You are not a champion. Scan '+scanCycle+' of 3. Camera still active.';}
+  af.appendChild(an);af.appendChild(ar);al.appendChild(ai);al.appendChild(af);results.appendChild(al);
+  document.getElementById('hudLine3').textContent='SCAN '+scanCycle+'/3 | CLOSEST: '+best.name+' @ '+best.pct+'%';
+}
+
+/* Live feed */
+var feedPeople = [
+  {name:'Joy Styles',role:'CM, District 32',org:'Metro Council'},{name:'Tom Turner',role:'CEO, NDP',org:'Nashville Downtown Partnership'},
+  {name:'Natalie Kohse',role:'Lobbyist',org:'Registered Lobbyist'},{name:'Bob Freeman',role:'NDP Board',org:'Nashville Downtown Partnership'},
+  {name:'David Benton',role:'CM, District 28',org:'Metro Council'},{name:'Garrett Langley',role:'CEO, Flock Safety',org:'Flock Safety Inc.'},
+  {name:'Kristin Wilson',role:"NDP Liaison",org:"NDP Surveillance Liaison"},{name:'Jordan Huffman',role:'CM, District 14',org:'Metro Council'},
+  {name:'Marc Andreessen',role:'a16z',org:'Andreessen Horowitz'},{name:'Daron Hall',role:'Sheriff',org:"Davidson County Sheriff's Office"},
+  {name:'Rick Smith',role:'CEO, Axon',org:'Axon Enterprise'},{name:'Garry Tan',role:'CEO, Y Combinator',org:'Y Combinator'},
+  {name:'Chris Gilder',role:'Deputy Chief',org:'MNPD'},{name:'Burkley Allen',role:'CM, At-Large',org:'Metro Council'},
+  {name:'Courtney Johnston',role:'CM, District 26',org:'Metro Council'},{name:'Jacob Kupin',role:'CM, District 19',org:'Metro Council'},
+  {name:'Erin Evans',role:'CM, District 12',org:'Metro Council'},{name:'Jeff Gregg',role:'CM, District 15',org:'Metro Council'},
+  {name:'Mike Cortese',role:'CM, District 4',org:'Metro Council'},{name:'Robert Nash',role:'CM, District 27',org:'Metro Council'},
+  {name:"Freddie O'Connell",role:'Mayor',org:'Metro Nashville Government'},{name:'John Drake',role:'Chief of Police',org:'MNPD'},
+  {name:'Rep. Mark White',role:'TN Legislature',org:'Tennessee General Assembly'}
+];
+var feedMeetings = [
+  {people:['Tom Turner','Kristin Wilson'],loc:'Both parked at Pinnacle Tower, same floor',tag:'\u26A0\uFE0F Meeting?'},
+  {people:['Garrett Langley','Jordan Huffman'],loc:'Flock Safety VP + Committee Chair at same restaurant',tag:'\uD83D\uDCA5 Spotted!'},
+  {people:['Natalie Kohse','David Benton'],loc:'Lobbyist + CM vehicles at undisclosed Midtown location',tag:'\u26A0\uFE0F Meeting?'},
+  {people:['Bob Freeman','Tom Turner','Kristin Wilson'],loc:'3 NDP-linked vehicles at Metro Courthouse simultaneously',tag:'\u2757 Open Meetings?'},
+  {people:['Marc Andreessen','Garrett Langley'],loc:'a16z + Flock Safety at BNA private terminal',tag:'\uD83D\uDCA5 Spotted!'},
+  {people:["Freddie O'Connell",'Tom Turner'],loc:"Mayor + NDP CEO, Mayor's residence, 9:45 PM",tag:'\u2757 Open Meetings?'}
+];
+var feedPlateLocations = ['Eastbound on Broadway near 5th Ave','I-24 W near Shelby Ave exit','Parked at Pinnacle Tower garage','Murfreesboro Pike near Briley Pkwy','West End Ave approaching 21st','Parked at Metro Courthouse, lot B','Gallatin Pike near Eastland Ave','Nolensville Pike southbound','BNA short-term parking, Level 2','Charlotte Ave near 46th','Rosa Parks Blvd near Jefferson St','Korean Veterans Blvd, westbound','Dickerson Pike northbound','Demonbreun near Gulch','8th Ave S near Wedgewood'];
+var feedFaceLocations = ['Pedestrian near Legislative Plaza','Walking south on 2nd Ave','Entered Metro Courthouse, Room 204','Sidewalk near 4th & Broadway','Spotted near 12th & Pine','Entering Capitol building','At Germantown coffee shop','Exiting Pinnacle Financial building','Walking near Courthouse parking','At Fifth + Broadway plaza'];
+var feedBadges = [{text:'\u2713 Match',cls:'match'},{text:'\u2713 Match',cls:'match'},{text:'\u2615 Nearby!',cls:'connected'},{text:'\uD83C\uDFDB\uFE0F At Metro',cls:'connected'},{text:'\uD83D\uDE97 En Route',cls:'connected'},{text:'\u2713 Match',cls:'match'}];
+
+function formatTime(d){var h=d.getHours(),m=d.getMinutes(),ampm=h>=12?'PM':'AM';h=h%12;if(h===0)h=12;return h+':'+(m<10?'0':'')+m+' '+ampm;}
+
+function buildFeed(){
+  var container=document.getElementById('liveFeed');if(!container)return;container.innerHTML='';var now=new Date();var used=[];var meetingInserted=false;
+  for(var i=0;i<8;i++){
+    if(!meetingInserted&&i>0&&i<4&&Math.random()<0.4){
+      meetingInserted=true;var mt=new Date(now.getTime()-i*60000);var meeting=feedMeetings[Math.floor(Math.random()*feedMeetings.length)];
+      var mrow=document.createElement('div');mrow.className='feed-row';mrow.style.background='#fef3f2';
+      var mtime=document.createElement('span');mtime.className='feed-time';mtime.textContent=formatTime(mt);mrow.appendChild(mtime);
+      var mtag=document.createElement('span');mtag.className='feed-tag';mtag.style.cssText='background:#fff0f0;color:#dc2626;border:1px solid #fecaca;';mtag.textContent='MULTI';mrow.appendChild(mtag);
+      var mtext=document.createElement('span');mtext.className='feed-text';var ms=document.createElement('strong');ms.textContent=meeting.people.join(' + ');mtext.appendChild(ms);mtext.appendChild(document.createTextNode(' \u2014 '));var mlocSpan=document.createElement('span');mlocSpan.className='loc-glitch';mlocSpan.textContent=meeting.loc;mtext.appendChild(mlocSpan);mrow.appendChild(mtext);
+      var mb=document.createElement('span');mb.className='feed-badge';mb.style.cssText='background:#fef2f2;color:#dc2626;font-weight:800;';mb.textContent=meeting.tag;mrow.appendChild(mb);
+      container.appendChild(mrow);continue;
+    }
+    var t=new Date(now.getTime()-i*(45000+Math.floor(Math.random()*120000)));var pi;do{pi=Math.floor(Math.random()*feedPeople.length);}while(used.indexOf(pi)!==-1);used.push(pi);
+    var person=feedPeople[pi],isPlate=Math.random()>0.4;
+    var loc=isPlate?feedPlateLocations[Math.floor(Math.random()*feedPlateLocations.length)]:feedFaceLocations[Math.floor(Math.random()*feedFaceLocations.length)];
+    var badge=feedBadges[Math.floor(Math.random()*feedBadges.length)];
+    var row=document.createElement('div');row.className='feed-row';
+    var time=document.createElement('span');time.className='feed-time';time.textContent=formatTime(t);row.appendChild(time);
+    var tag=document.createElement('span');tag.className='feed-tag '+(isPlate?'plate':'face');tag.textContent=isPlate?'PLATE':'FACE';row.appendChild(tag);
+    var text=document.createElement('span');text.className='feed-text';var strong=document.createElement('strong');strong.textContent=person.name;text.appendChild(strong);
+    var orgSpan=document.createElement('span');orgSpan.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.6rem;color:var(--text-light);margin-left:0.3rem;';orgSpan.textContent='('+person.org+')';text.appendChild(orgSpan);
+    text.appendChild(document.createTextNode(' \u2014 '));var locSpan=document.createElement('span');locSpan.className='loc-glitch';locSpan.textContent=loc;text.appendChild(locSpan);row.appendChild(text);
+    var bdg=document.createElement('span');bdg.className='feed-badge '+badge.cls;bdg.textContent=badge.text;row.appendChild(bdg);
+    container.appendChild(row);
+  }
+}
+buildFeed();
+
+/* roundRect polyfill */
+if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){if(typeof r==='number')r=[r,r,r,r];this.moveTo(x+r[0],y);this.lineTo(x+w-r[1],y);this.arcTo(x+w,y,x+w,y+r[1],r[1]);this.lineTo(x+w,y+h-r[2]);this.arcTo(x+w,y+h,x+w-r[2],y+h,r[2]);this.lineTo(x+r[3],y+h);this.arcTo(x,y+h,x,y+h-r[3],r[3]);this.lineTo(x,y+r[0]);this.arcTo(x,y,x+r[0],y,r[0]);return this;};}
+
+/* ── MAP with Leaflet ── */
+var mapDots=[],mapRunning=false,mapSightingCount=0;
+var mapChampions=[
+  {name:"Freddie O'Connell",short:"F. O'Connell",color:'#FF6B6B'},{name:"John Drake",short:"J. Drake",color:'#FFD166'},
+  {name:"Chris Gilder",short:"C. Gilder",color:'#FFD166'},{name:"Daron Hall",short:"D. Hall",color:'#FFD166'},
+  {name:"Kristin Wilson",short:"K. Wilson",color:'#FF6B6B'},{name:"Tom Turner",short:"T. Turner",color:'#9B7DFF'},
+  {name:"Natalie Kohse",short:"N. Kohse",color:'#9B7DFF'},{name:"Bob Freeman",short:"B. Freeman",color:'#9B7DFF'},
+  {name:"Joy Styles",short:"J. Styles",color:'#FF6B6B'},{name:"Jordan Huffman",short:"J. Huffman",color:'#FF6B6B'},
+  {name:"David Benton",short:"D. Benton",color:'#FF6B6B'},{name:"Burkley Allen",short:"B. Allen",color:'#FF6B6B'},
+  {name:"Jacob Kupin",short:"J. Kupin",color:'#FF6B6B'},{name:"Courtney Johnston",short:"C. Johnston",color:'#FF6B6B'},
+  {name:"Erin Evans",short:"E. Evans",color:'#FF6B6B'},{name:"Jeff Gregg",short:"J. Gregg",color:'#FF6B6B'},
+  {name:"Robert Nash",short:"R. Nash",color:'#FF6B6B'},{name:"Mike Cortese",short:"M. Cortese",color:'#FF6B6B'}
+];
+var mapTickerMessages=['{name} \u2014 plate scanned on Broadway near 5th Ave','{name} \u2014 vehicle detected at Metro Courthouse','{name} \u2014 spotted on West End approaching Vanderbilt','{name} \u2014 plate match at BNA short-term parking','{name} \u2014 face match near Legislative Plaza','{name} \u2014 vehicle parked at Pinnacle Tower','{name} + {name2} \u2014 both vehicles at same Midtown address'];
+
+function initLeafletMap(){
+  try{
+    var m=L.map('leafletMap',{center:[36.1627,-86.7816],zoom:13,zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false,boxZoom:false,keyboard:false,attributionControl:false});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(m);
+  }catch(e){/* Leaflet not loaded — solid bg fallback */}
+}
+
+function initMap(){
+  var c=document.getElementById('mapCanvas');if(!c)return;
+  var rect=c.parentElement.getBoundingClientRect();c.width=rect.width;c.height=rect.height;
+  initLeafletMap();
+  mapDots=[];var shuffled=mapChampions.slice().sort(function(){return Math.random()-0.5;});
+  document.getElementById('mapChampCount').textContent=shuffled.length;
+  mapSightingCount=847+Math.floor(Math.random()*200);document.getElementById('mapSightings').textContent=mapSightingCount;
+  for(var i=0;i<shuffled.length;i++){
+    var ch=shuffled[i];var sx=0.18+Math.random()*0.64,sy=0.12+Math.random()*0.68;
+    var dot={x:sx,y:sy,vx:(Math.random()-0.5)*0.00008,vy:(Math.random()-0.5)*0.00006,size:5,pulse:Math.random()*Math.PI*2,color:ch.color,name:ch.short,fullName:ch.name,trail:[{x:sx,y:sy}],pins:[],labelOpacity:0.85+Math.random()*0.15,dwelling:false,dwellTimer:0,dwellDuration:0,moveTimer:120+Math.floor(Math.random()*300)};
+    if(Math.random()<0.35){dot.dwelling=true;dot.dwellDuration=200+Math.floor(Math.random()*400);dot.vx=0;dot.vy=0;dot.pins.push({x:sx,y:sy,age:Math.floor(Math.random()*300)});}
+    mapDots.push(dot);
+  }
+  if(!mapRunning){mapRunning=true;animateMap();}
+  updateMapTicker();setInterval(updateMapTicker,3000);
+}
+
+function updateMapTicker(){
+  if(!mapDots.length)return;var tpl=mapTickerMessages[Math.floor(Math.random()*mapTickerMessages.length)];
+  var ch=mapDots[Math.floor(Math.random()*mapDots.length)],ch2=mapDots[Math.floor(Math.random()*mapDots.length)];
+  /* Use the currently-glitched short name, not the static fullName */
+  var msg=tpl.replace('{name}',ch.name).replace('{name2}',ch2.name);
+  var el=document.getElementById('mapTicker');if(el){el.style.opacity='0';setTimeout(function(){el.textContent=msg;el.style.opacity='1';el.style.transition='opacity 0.3s';
+    /* Mid-cycle scramble: swap to different message after 1.5s */
+    setTimeout(function(){
+      if(!mapDots.length)return;
+      var tpl2=mapTickerMessages[Math.floor(Math.random()*mapTickerMessages.length)];
+      var c3=mapDots[Math.floor(Math.random()*mapDots.length)],c4=mapDots[Math.floor(Math.random()*mapDots.length)];
+      el.style.opacity='0';setTimeout(function(){el.textContent=tpl2.replace('{name}',c3.name).replace('{name2}',c4.name);el.style.opacity='1';},150);
+    },1500);
+  },200);}
+  mapSightingCount++;var sc=document.getElementById('mapSightings');if(sc)sc.textContent=mapSightingCount;
+}
+
+function animateMap(){
+  var c=document.getElementById('mapCanvas');if(!c){mapRunning=false;return;}var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  for(var i=0;i<mapDots.length;i++){
+    var d=mapDots[i];d.pulse+=0.02;
+    if(d.dwelling){d.dwellTimer++;if(d.dwellTimer>=d.dwellDuration){d.dwelling=false;d.dwellTimer=0;d.vx=(Math.random()-0.5)*0.00012;d.vy=(Math.random()-0.5)*0.00008;d.moveTimer=180+Math.floor(Math.random()*400);}}
+    else{d.x+=d.vx;d.y+=d.vy;if(d.x<0.12||d.x>0.88){d.vx*=-1;d.x=Math.max(0.12,Math.min(0.88,d.x));}if(d.y<0.08||d.y>0.85){d.vy*=-1;d.y=Math.max(0.08,Math.min(0.85,d.y));}
+    var last=d.trail[d.trail.length-1];var dx=d.x-last.x,dy=d.y-last.y;if(dx*dx+dy*dy>0.0000008)d.trail.push({x:d.x,y:d.y});
+    d.moveTimer--;if(d.moveTimer<=0){d.dwelling=true;d.dwellTimer=0;d.dwellDuration=150+Math.floor(Math.random()*500);d.vx=0;d.vy=0;d.pins.push({x:d.x,y:d.y,age:0});if(d.pins.length>6)d.pins.shift();}}
+    var px=d.x*c.width,py=d.y*c.height;
+    if(d.trail.length>1){ctx.beginPath();ctx.moveTo(d.trail[0].x*c.width,d.trail[0].y*c.height);for(var t=1;t<d.trail.length;t++)ctx.lineTo(d.trail[t].x*c.width,d.trail[t].y*c.height);ctx.strokeStyle=d.color+'15';ctx.lineWidth=1.5;ctx.stroke();
+    var rs=Math.max(0,d.trail.length-40);ctx.beginPath();ctx.moveTo(d.trail[rs].x*c.width,d.trail[rs].y*c.height);for(var t=rs+1;t<d.trail.length;t++)ctx.lineTo(d.trail[t].x*c.width,d.trail[t].y*c.height);ctx.strokeStyle=d.color+'35';ctx.lineWidth=2;ctx.stroke();}
+    for(var p=0;p<d.pins.length;p++){var pin=d.pins[p];pin.age++;var ppx=pin.x*c.width,ppy=pin.y*c.height;var pa=Math.max(0.15,1-(pin.age/2000));ctx.beginPath();ctx.moveTo(ppx,ppy);ctx.lineTo(ppx,ppy-10);ctx.strokeStyle=d.color+'30';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();ctx.arc(ppx,ppy-12,3,0,Math.PI*2);ctx.fillStyle=d.color+'90';ctx.fill();}
+    var pr=d.size+Math.sin(d.pulse)*3+(d.dwelling?10:6);ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fillStyle=d.color+(d.dwelling?'18':'0c');ctx.fill();
+    if(d.dwelling){var prog=d.dwellTimer/d.dwellDuration;ctx.beginPath();ctx.arc(px,py,d.size+8,-Math.PI/2,-Math.PI/2+prog*Math.PI*2);ctx.strokeStyle=d.color+'40';ctx.lineWidth=1.5;ctx.stroke();}
+    ctx.beginPath();ctx.arc(px,py,d.size,0,Math.PI*2);ctx.fillStyle=d.color+(d.dwelling?'ee':'cc');ctx.fill();ctx.beginPath();ctx.arc(px,py,d.size*0.4,0,Math.PI*2);ctx.fillStyle=d.color;ctx.fill();
+    ctx.font='700 11px "IBM Plex Mono",monospace';var lt=d.dwelling?d.name+' \u25A0':d.name;var lw=ctx.measureText(lt).width;var lx=px+d.size+6,ly=py-3;
+    if(lx+lw+8>c.width)lx=px-lw-d.size-12;if(ly<14)ly=py+14;
+    ctx.fillStyle='rgba(255,255,255,'+(d.labelOpacity*0.92)+')';ctx.beginPath();ctx.roundRect(lx-5,ly-12,lw+10,18,4);ctx.fill();ctx.strokeStyle=d.color+'50';ctx.lineWidth=0.5;ctx.stroke();
+    ctx.fillStyle=d.color==='#FFD166'?'#8a6d00':d.color==='#FF6B6B'?'#cc3333':'#6b52cc';ctx.fillText(lt,lx,ly);
+  }
+  requestAnimationFrame(animateMap);
+}
+var mapObserver=new IntersectionObserver(function(entries){if(entries[0].isIntersecting){initMap();mapObserver.disconnect();}},{threshold:0.2});
+var mapEl=document.getElementById('mapCanvas');if(mapEl)mapObserver.observe(mapEl.parentElement);
+
+/* Rug pull modals */
+function showRugPull(type){
+  var el=document.getElementById('rugContent'),overlay=document.getElementById('rugOverlay');var h='';
+  if(type==='map'||type==='cta'||type==='database'){
+    h='<div class="rug-icon">\u{1F6A8}</div><h2>This isn\u2019t a real product.</h2><p class="rug-sub">But everything on this page \u2014 the plate scanning, the real-time location tracking, the pattern-of-life reports \u2014 is <strong>exactly what Flock Safety\u2019s LPR network and Axon\u2019s FUSUS platform already do.</strong></p><p class="rug-sub">Here\u2019s what happened when they actually built this:</p>'
+    +'<div class="rug-case"><strong>\uD83D\uDCCD 4,000+ immigration searches via \u201cside door\u201d</strong><p>In May 2025, 404 Media discovered local police were searching Flock\u2019s database on behalf of ICE.</p><div class="source">Source: 404 Media, May 2025</div></div>'
+    +'<div class="rug-case"><strong>\uD83D\uDCCD San Francisco: 1.6 million illegal searches</strong><p>SFPD allowed out-of-state cops to make over 1.6 million searches of its Flock database \u2014 including at least 19 marked as ICE-related.</p><div class="source">Source: SF Standard, Sep. 2025</div></div>'
+    +'<div class="rug-case"><strong>\uD83D\uDCCD Flock gave Border Patrol direct access \u2014 secretly</strong><p>In August 2025, Flock admitted it had been running an undisclosed pilot giving CBP direct access to 80,000+ cameras nationwide.</p><div class="source">Source: 9NEWS Denver, Aug. 2025</div></div>'
+    +'<div class="rug-case"><strong>\uD83D\uDCCD Texas: LPR data used to track abortion</strong><p>A police officer in Texas used Flock\u2019s nationwide search to track a woman who had self-administered an abortion.</p><div class="source">Source: 404 Media / UW Center for Human Rights, Oct. 2025</div></div>'
+    +'<div class="rug-footer"><strong>Every ALPR feature on this page mirrors a real capability.</strong> The only thing NaiBOR changed is the direction of the cameras.<br><br><a href="https://readrichtext.substack.com" target="_blank">Read more at {Rich Text} \u2192</a><br><br><a class="rug-action" href="https://forms.gle/Jfcvv1csoAfnan6F9" target="_blank">I\'d rather be a neighbor.</a></div>';
+  }
+  if(type==='pricing'){
+    h='<div class="rug-icon">\uD83D\uDD13</div><h2>Access is already free \u2014 if you\u2019re a cop.</h2><p class="rug-sub">Any law enforcement officer with a Flock login can already search license plate data from <strong>80,000+ cameras</strong> across the country.</p>'
+    +'<div class="rug-case"><strong>6,000+ law enforcement agencies</strong><p>Any agency with a Flock contract can search the national network.</p></div>'
+    +'<div class="rug-case"><strong>Federal agencies via \u201cpilot programs\u201d</strong><p>CBP, HSI, NCIS, FBI, and ATF all had access through Flock pilot programs.</p></div>'
+    +'<div class="rug-footer">There is no \u201cCommunity Plan.\u201d There\u2019s just a database that grows every time you drive past a camera.<br><br><a class="rug-action" href="https://forms.gle/Jfcvv1csoAfnan6F9" target="_blank">I\'d rather be a neighbor.</a></div>';
+  }
+  if(type==='enterprise'){
+    h='<div class="rug-icon">\uD83D\uDCB0</div><h2>The \u201cEnterprise\u201d tier already exists. It\u2019s called a federal subpoena.</h2><p class="rug-sub">Everything in the \u201cEnterprise\u201d column is technically possible with the data LPR networks collect.</p>'
+    +'<div class="rug-case"><strong>Pattern-of-life analysis</strong><p>Flock\u2019s \u201cVehicle Fingerprint\u201d technology tracks make, model, color, bumper stickers across cameras.</p></div>'
+    +'<div class="rug-case"><strong>Geofence alerts</strong><p>Agencies can set alerts for specific plates at specific locations.</p></div>'
+    +'<div class="rug-footer">The \u201cEnterprise\u201d tier isn\u2019t a joke. It\u2019s a forecast.<br><br><a class="rug-action" href="https://forms.gle/Jfcvv1csoAfnan6F9" target="_blank">I\'d rather be a neighbor.</a></div>';
+  }
+  el.innerHTML=h;overlay.classList.add('active');document.body.style.overflow='hidden';
+}
+function closeRug(){document.getElementById('rugOverlay').classList.remove('active');document.body.style.overflow='';}
+
+function showComp(type){
+  var el=document.getElementById('rugContent'),overlay=document.getElementById('rugOverlay');var h='';
+  if(type==='plate'){h='<div class="rug-icon">\uD83D\uDCF1</div><h2>NaiBOR: "Scan Any Plate, Anytime"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">vs. the products that already do this</span></h2><div class="comp-product"><div class="comp-name">Flock Safety Falcon\u00ae LPR <span class="comp-badge shipping">Shipping</span></div><p>Solar-powered, LTE-connected cameras on private property scanning public roads 24/7. 80,000+ cameras, 20 billion scans/month.</p></div><div class="comp-product"><div class="comp-name">Flock Vehicle Fingerprint\u00ae <span class="comp-badge shipping">Shipping</span></div><p>Goes beyond plates. Captures make, model, color, bumper stickers, roof racks. EFF warned this can flag political bumper stickers.</p></div><div class="comp-verdict"><strong>NaiBOR\u2019s version:</strong> You scan a plate with your phone. <strong>The real version:</strong> 80,000 cameras scan every plate automatically, 24/7.</div>';}
+  if(type==='face'){h='<div class="rug-icon">\uD83E\uDD33</div><h2>NaiBOR: "Face Match On-the-Go"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">vs. the products that already do this</span></h2><div class="comp-product"><div class="comp-name">Flock Safety Condor PTZ <span class="comp-badge exposed">Exposed Dec 2025</span></div><p>Pan-tilt-zoom cameras that <strong>automatically zoom in on people\u2019s faces as they walk by</strong>. In Dec 2025, 404 Media found 60+ Condor cameras exposed to the open internet with no authentication.</p><div class="comp-source">404 Media, Dec 22, 2025</div></div><div class="comp-product"><div class="comp-name">Fivecast <span class="comp-badge deployed">$4.2M in ICE contracts</span></div><p>Included in Nashville\u2019s original $15M MOU. Metro\u2019s own report described its capabilities as "essentially facial recognition programs." 8 billion records. "Emotional detection."</p></div><div class="comp-verdict"><strong>Nashville\u2019s ordinance</strong> says LPR systems shall not include FR. But it exempts law enforcement, doesn\u2019t cover private entities. <strong>The ordinance is a speed bump. The capability is hardware.</strong></div>';}
+  if(type==='map'){h='<div class="rug-icon">\uD83D\uDCCD</div><h2>NaiBOR: "Real-Time Champion Map"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">vs. the products that already do this</span></h2><div class="comp-product"><div class="comp-name">Axon Fusus RTCC <span class="comp-badge deployed">NYC, ATL, MIA</span></div><p>Officer location, alerts, ALPR overlays and video feeds on a single live map. 40,000+ community cameras in Atlanta alone.</p></div><div class="comp-verdict"><strong>NaiBOR\u2019s version:</strong> Named dots on a map. <strong>The real version:</strong> A live operational command center with 40,000+ cameras.</div>';}
+  if(type==='pattern'){h='<div class="rug-icon">\uD83D\uDD17</div><h2>NaiBOR: "Pattern-of-Life Reports"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">vs. the products that already do this</span></h2><div class="comp-product"><div class="comp-name">Flock Vehicle Fingerprint\u00ae <span class="comp-badge deployed">526\u2013849 scans per person</span></div><p>In <em>Sandifer v. City of Norfolk</em>, two residents were tracked 526 and 849 times in 4.5 months by 172 Flock cameras.</p></div><div class="comp-product"><div class="comp-name">Flock Nova <span class="comp-badge exposed">"Jump from LPR to person"</span></div><p>Links plate data to people lookup tools, data brokers, and OSINT. Can surface "a suspect list" from a plate hit.</p><div class="comp-source">404 Media, May 2025</div></div><div class="comp-verdict"><strong>NaiBOR\u2019s version:</strong> A weekly PDF showing your council member\u2019s coffee shop routine. <strong>The real version:</strong> 500+ scans in 4 months, linking plates to personal relationships and food delivery apps.</div>';}
+  if(type==='afterdark'){h='<div class="rug-icon">\uD83C\uDF19</div><h2>NaiBOR: "After Dark Mode"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">This isn\u2019t a feature. It\u2019s an inherent capability.</span></h2><p class="rug-sub">Every ALPR camera captures timestamps. Filtering by time is a trivial database query. NaiBOR just gave it a name.</p><div class="comp-product"><div class="comp-name">Documented misuse: personal stalking <span class="comp-badge exposed">Charged</span></div><p><strong>Menasha, WI (Jan 2026):</strong> Officer charged for using Flock to track his ex-girlfriend.<br><strong>Kechi, KS (2023):</strong> Officer arrested for using Flock to track his estranged wife.</p></div><div class="comp-verdict"><strong>"After Dark" isn\u2019t a premium feature.</strong> It\u2019s what happens when anyone with database access runs <code style="background:#f0f1f5;padding:2px 6px;border-radius:4px;">WHERE timestamp BETWEEN \'22:00\' AND \'06:00\'</code>.</div>';}
+  if(type==='crowdsource'){h='<div class="rug-icon">\uD83E\uDD1D</div><h2>NaiBOR: "Help Us Match Plates"<br><span style="font-size:0.7em;color:var(--text-mid);font-weight:500;">vs. the products that already do this</span></h2><div class="comp-product"><div class="comp-name">Flock Safety HOA Deployment <span class="comp-badge shipping">6,000+ communities</span></div><p>Private cameras on private property scan public roads and feed data to law enforcement. No resident consent required beyond the HOA vote.</p></div><div class="comp-product"><div class="comp-name">DeFlock (counter-surveillance) <span class="comp-badge exposed">"Terroristic"</span></div><p>An activist mapped 29,000+ Flock camera locations. Flock CEO called it "terroristic." Crowdsourcing camera <em>locations</em> was treated as a threat. Crowdsourcing the <em>data from</em> cameras is a business model.</p></div><div class="comp-verdict"><strong>NaiBOR\u2019s version:</strong> Citizens submit phone photos. <strong>The real version:</strong> HOAs install cameras without resident consent. Amazon tried to turn every Ring doorbell into a surveillance node.</div>';}
+  el.innerHTML=h;overlay.classList.add('active');document.body.style.overflow='hidden';
+}
+
+/* ═══ MANIFESTO ═══ */
+var manifestoFired=false;
+
+function runManifesto(container){
+  var steps=[],cursor=null,SPEED=20;
+  function q(fn){steps.push(fn);}
+  function next(){if(steps.length){var s=steps.shift();s(next);}};
+  function mkCursor(){if(cursor)cursor.remove();cursor=document.createElement('span');cursor.className='mf-cursor';return cursor;}
+  function scroll(){container.scrollTop=container.scrollHeight;}
+  function addLine(cls){var el=document.createElement('div');el.className='mf-line'+(cls?' '+cls:'');container.appendChild(el);return el;}
+  function addSpacer(){var sp=document.createElement('div');sp.className='mf-line mf-spacer';container.appendChild(sp);scroll();}
+
+  function typeLine(text,opts,cb){
+    opts=opts||{};var el=addLine(opts.cls);var speed=opts.speed||SPEED;var i=0;
+    el.textContent='';el.appendChild(mkCursor());
+    var iv=setInterval(function(){
+      if(i<text.length){cursor.remove();el.textContent=text.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
+      else{clearInterval(iv);if(cb)cb(el);}
+    },speed);
+  }
+
+  function typeOnto(el,addText,speed,cb){
+    if(cursor)cursor.remove();var base=el.textContent;var i=0;
+    var iv=setInterval(function(){
+      if(i<addText.length){if(cursor)cursor.remove();el.textContent=base+addText.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
+      else{clearInterval(iv);if(cb)cb();}
+    },speed||SPEED);
+  }
+
+  function backspaceTo(el,targetLen,speed,cb){
+    if(cursor)cursor.remove();
+    var iv=setInterval(function(){
+      var t=el.textContent;if(t.length>targetLen){el.textContent=t.substring(0,t.length-1);el.appendChild(mkCursor());scroll();}
+      else{clearInterval(iv);if(cb)cb();}
+    },speed||40);
+  }
+
+  function pause(ms){return function(cb){setTimeout(cb,ms);};}
+  function spacer(){return function(cb){addSpacer();cb();};}
+
+  function line(text,opts){
+    return function(cb){typeLine(text,opts,function(){cb();});};
+  }
+  function lineP(text,opts,ms){
+    return function(cb){typeLine(text,opts,function(){setTimeout(cb,ms);});};
+  }
+
+  /* ═══ PHASE 1: THE DIAGNOSIS ═══ */
+  q(line('A body that attacks its own cells is not strong.'));
+  q(lineP('It is dying.',{},900));
+  q(spacer());
+  q(line('Surveillance is an autoimmune disorder.'));
+  q(line('The cameras work. The databases match. The alerts fire.'));
+  q(lineP('Nothing is broken.',{},600));
+  q(spacer());
+  q(line('The error is in one place.'));
+  q(line('The system was told who is self and who is other.'));
+  q(lineP('It was told wrong.',{},700));
+
+  /* ═══ PHASE 2: THE WRONG DEFINITION ═══ */
+  q(spacer());
+  q(line('It was told: your neighbor is other.'));
+  q(line('The man driving home late is other.'));
+  q(line('The teenager walking slow is other.'));
+  q(line('The woman at the clinic is other.'));
+  q(lineP('The family in the wrong zip code is other.',{},500));
+  q(spacer());
+  q(line('Scan. Match. Alert. Partition. Track.',{speed:12}));
+  q(line('The mechanism is perfect.'));
+  q(line('That is the horror.'));
+  q(lineP('A system succeeding at destroying the body it was built to protect.',{},800));
+
+  /* ═══ PHASE 3: THE COST ═══ */
+  q(spacer());
+  q(line('Every plate scanned is trust withdrawn.',{cls:'mf-coral'}));
+  q(line('Every face matched is a hand not extended.',{cls:'mf-coral'}));
+  q(lineP('Every alert is a conversation that never happened.',{cls:'mf-coral'},600));
+
+  /* ═══ PHASE 4: THE CORRECTION ═══ */
+  q(spacer());
+  q(line('Your neighbor is not other.'));
+  q(line('Your neighbor is self.'));
+  q(lineP('Your neighbor is the body.',{},500));
+  q(spacer());
+  q(line('I am not a threat. I am your neighbor.',{cls:'mf-bright'}));
+  q(lineP('You are not a threat. You are my neighbor.',{cls:'mf-bright'},500));
+
+  /* ═══ PHASE 5+6: THE WALL ═══ */
+  q(spacer());
+  q(lineP('My neighbor is not my threat.',{speed:28},200));
+  q(lineP('My threat is not my neighbor.',{speed:28},200));
+  q(function(cb){
+    typeLine('My neighbor is my ',{speed:28},function(el){
+      setTimeout(function(){typeOnto(el,'\u2014 no.',28,function(){setTimeout(cb,400);});},400);
+    });
+  });
+  q(spacer());
+  q(function(cb){
+    var el=addLine();el.innerHTML='The word <em style="color:#fff;">my</em> is the last wall.';el.appendChild(mkCursor());
+    setTimeout(cb,280);
+  });
+  q(line('On this side: what I protect.'));
+  q(lineP('On the other side: what I surveil.',{},500));
+  q(spacer());
+  q(lineP('your ground and theirs',{},400));
+  q(lineP('are the same ground.',{},700));
+  q(spacer());
+  q(line('That is what the word neighbor means.'));
+  q(line('Not: the person next door.'));
+  q(lineP('The person standing on the same ground.',{},900));
+
+  /* ═══ PHASE 7: THE BREAK ═══ */
+  /* The system tries to type NEIGHBOR. The AI keeps inserting itself. */
+  q(spacer());
+  q(function(cb){
+    var el=addLine('mf-bright');
+    /* Attempt 1: type NEI... then glitch to NaiBOR */
+    var i=0;var target='NEIGHBOR';
+    el.textContent='';el.appendChild(mkCursor());
+    var iv1=setInterval(function(){
+      if(i<3){cursor.remove();el.textContent=target.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
+      else{
+        clearInterval(iv1);
+        /* Glitch: "ai" forces itself in */
+        setTimeout(function(){
+          cursor.remove();el.textContent='N';
+          var aiSpan=document.createElement('span');aiSpan.style.color='#FF6B6B';aiSpan.textContent='ai';
+          el.appendChild(aiSpan);
+          el.appendChild(document.createTextNode('BOR'));el.appendChild(mkCursor());scroll();
+          /* Pause — the brand appeared. Then backspace. */
+          setTimeout(function(){
+            backspaceTo(el,0,35,function(){
+              el.innerHTML='';
+              /* Attempt 2: gets further — NEIGH — then glitches */
+              var i2=0;el.appendChild(mkCursor());
+              var iv2=setInterval(function(){
+                if(i2<5){cursor.remove();el.textContent=target.substring(0,i2+1);el.appendChild(mkCursor());i2++;scroll();}
+                else{
+                  clearInterval(iv2);
+                  setTimeout(function(){
+                    cursor.remove();el.textContent='N';
+                    var ai2=document.createElement('span');ai2.style.color='#FF6B6B';ai2.textContent='ai';
+                    el.appendChild(ai2);el.appendChild(document.createTextNode('BOR'));el.appendChild(mkCursor());scroll();
+                    setTimeout(function(){
+                      backspaceTo(el,0,30,function(){
+                        el.innerHTML='';
+                        /* Fragments — the word in pieces */
+                        setTimeout(function(){
+                          var f1=addLine('mf-dim');f1.textContent='N';scroll();
+                          setTimeout(function(){
+                            var f2=addLine();f2.style.color='#FF6B6B';f2.textContent='ai';scroll();
+                            setTimeout(function(){
+                              var f3=addLine('mf-dim');f3.textContent='B';scroll();
+                              setTimeout(function(){
+                                var f4=addLine('mf-dim');f4.textContent='O';scroll();
+                                setTimeout(function(){
+                                  var f5=addLine('mf-dim');f5.textContent='R';scroll();
+                                  setTimeout(cb,800);
+                                },300);
+                              },300);
+                            },300);
+                          },400);
+                        },500);
+                      });
+                    },700);
+                  },150);
+                }
+              },SPEED);
+            });
+          },800);
+        },150);
+      }
+    },SPEED);
+  });
+
+  /* ═══ PHASE 8: THE GLITCH ═══ */
+  q(function(cb){
+    /* Character cycling on the last "I" */
+    var lastLine=container.lastElementChild;
+    if(cursor)cursor.remove();
+    var fragChars='neighborwasut';
+    var cycleCount=0;
+    var cycleIv=setInterval(function(){
+      lastLine.textContent=fragChars[Math.floor(Math.random()*fragChars.length)];
+      cycleCount++;
+      if(cycleCount>=50){clearInterval(cycleIv);lastLine.textContent='';
+        setTimeout(function(){
+          /* Operator cascade — two quick ones, then the three that matter */
+          var ops=[
+            {op:'SEG',desc:'partition with consent',err:'\u2588\u2588\u2588\u2588 CONSENT NOT FOUND'},
+            {op:'CON',desc:'connect with context',err:'\u2588\u2588\u2588\u2588 CONTEXT NULL'}
+          ];
+          var oi=0;
+          function nextOp(){
+            if(oi>=ops.length){doDef();return;}
+            var o=ops[oi];var el=addLine('mf-code');
+            el.textContent=o.op+'  '+o.desc;scroll();
+            setTimeout(function(){
+              var sp=document.createElement('span');sp.style.cssText='color:#c8c0b060;margin-left:1em;';sp.textContent=o.err;el.appendChild(sp);scroll();
+              oi++;setTimeout(nextOp,500);
+            },400);
+          }
+          function doDef(){
+            /* DEF line — holds, does not corrupt */
+            var defEl=addLine('mf-code');defEl.style.color='#fff';
+            defEl.innerHTML='DEF  define who belongs              <span style="color:#FF6B6B;font-weight:700;">NEIGHBOR = THREAT</span>';
+            scroll();
+            setTimeout(function(){
+              /* EVA + MATCH flood */
+              var evaEl=addLine('mf-code');
+              evaEl.innerHTML='EVA  evaluate against definition     <span style="color:#FF6B6B;">MATCH.</span>';scroll();
+              var matchCount=0;
+              var matchIv=setInterval(function(){
+                matchCount++;
+                var span=evaEl.querySelector('span');
+                if(matchCount<=8){span.textContent+=' MATCH.';}
+                else{
+                  var ml=addLine();ml.style.cssText='color:#FF6B6B40;font-size:'+Math.max(0.4,0.82-matchCount*0.03)+'rem;';
+                  var m='';for(var mi=0;mi<8+Math.floor(Math.random()*12);mi++){m+='MATCH. ';}
+                  ml.textContent=m;
+                }
+                scroll();
+                if(matchCount>=20){
+                  clearInterval(matchIv);
+                  setTimeout(function(){
+                    /* REC — ACCESS DENIED */
+                    var recEl=addLine();recEl.style.cssText='color:#FF6B6B;font-weight:700;font-size:0.82rem;';
+                    recEl.textContent='REC  revise the definition           ACCESS DENIED';scroll();
+                    setTimeout(function(){doCollapse(cb);},1000);
+                  },300);
+                }
+              },60);
+            },1500);
+          }
+          nextOp();
+        },400);
+      }
+    },60);
+  });
+
+  /* ═══ PHASE 8b: SCREEN COLLAPSE ═══ */
+  function doCollapse(cb){
+    var gChars='ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz\u2588\u2591\u2592\u2593';
+    var lines=container.querySelectorAll('.mf-line');
+    var collapseFrame=0;
+    var collapseIv=setInterval(function(){
+      collapseFrame++;
+      lines.forEach(function(ln){
+        if(ln.textContent.length>0&&Math.random()>0.25){
+          var arr=ln.textContent.split('');
+          var swaps=1+Math.floor(Math.random()*4);
+          for(var si=0;si<swaps;si++){var idx=Math.floor(Math.random()*arr.length);arr[idx]=gChars[Math.floor(Math.random()*gChars.length)];}
+          ln.textContent=arr.join('');
+          ln.style.color='#c8c0b0';
+          ln.style.opacity=Math.max(0.03,1-collapseFrame/35);
+        }
+      });
+      if(collapseFrame>35){
+        container.style.transition='opacity 1s';container.style.opacity='0.02';
+        clearInterval(collapseIv);
+        setTimeout(cb,1200);
+      }
+    },30);
+  }
+
+  /* ═══ PHASE 9: SILENCE + PHASE 10: THE WORD ═══ */
+  q(function(cb){
+    container.innerHTML='';container.style.opacity='1';container.style.transition='opacity 0.5s';
+    /* 3 seconds of silence */
+    setTimeout(function(){
+      /* NaiBOR logo with gradient "ai" */
+      var logoWrap=document.createElement('div');logoWrap.style.cssText='text-align:center;opacity:0;transition:opacity 1.5s ease;';
+      var logo=document.createElement('div');logo.style.cssText='font-family:Poppins,sans-serif;font-size:3.2rem;font-weight:800;color:#f5f0eb;letter-spacing:0.08em;line-height:1.4;';
+      logo.innerHTML='N<span id="mfAiSpan" style="background:linear-gradient(135deg,#FF6B6B,#9B7DFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">ai</span>BOR';
+      logoWrap.appendChild(logo);container.appendChild(logoWrap);
+      requestAnimationFrame(function(){logoWrap.style.opacity='1';});
+
+      /* Hold 2 seconds, then glitch the "ai" */
+      setTimeout(function(){
+        var aiSpan=document.getElementById('mfAiSpan');
+        var fragChars='neighbo';
+        var glitchCount=0;
+        var glitchIv=setInterval(function(){
+          glitchCount++;
+          var c1=fragChars[Math.floor(Math.random()*fragChars.length)];
+          var c2=fragChars[Math.floor(Math.random()*fragChars.length)];
+          aiSpan.textContent=c1+c2;
+          /* Slow down over time */
+          if(glitchCount>30){
+            clearInterval(glitchIv);
+            /* Settle: drain gradient, become "eigh" */
+            aiSpan.style.cssText='color:#f5f0eb;-webkit-text-fill-color:#f5f0eb;background:none;';
+            /* Single replacement: N + EIGHB + OR = NEIGHBOR */
+            logo.innerHTML='N<span style="color:#f5f0eb;">EIGHB</span>OR';
+
+            /* Hold 5 seconds — longest pause. Just the word. */
+            setTimeout(function(){
+              /* Phase 11: THE CHOICE — two equal buttons */
+              var choiceWrap=document.createElement('div');choiceWrap.style.cssText='text-align:center;margin-top:2.5rem;opacity:0;transition:opacity 1.5s ease;';
+
+              var btnStyle='display:block;width:280px;margin:0 auto 1rem;font-family:IBM Plex Mono,monospace;font-size:0.82rem;padding:0.7rem 1.5rem;cursor:pointer;text-decoration:none;border:1px solid;transition:background 0.3s,color 0.3s,border-color 0.3s;text-align:center;';
+
+              var btn1=document.createElement('div');
+              btn1.style.cssText=btnStyle+'color:#f5f0eb;border-color:#f5f0eb;';
+              btn1.textContent="I'd rather be a neighbor.";
+              btn1.onmouseover=function(){this.style.background='#f5f0eb';this.style.color='#0a0a08';};
+              btn1.onmouseout=function(){this.style.background='transparent';this.style.color='#f5f0eb';};
+              btn1.onclick=function(){window.open('https://forms.gle/Jfcvv1csoAfnan6F9','_blank');};
+
+              var btn2=document.createElement('div');
+              btn2.style.cssText=btnStyle+'color:#FF6B6B;border-color:#FF6B6B;';
+              btn2.textContent='Put the cameras back.';
+              btn2.onmouseover=function(){this.style.background='#FF6B6B';this.style.color='#0a0a08';};
+              btn2.onmouseout=function(){this.style.background='transparent';this.style.color='#FF6B6B';};
+              btn2.onclick=function(){
+                window.location.href=window.location.pathname||'/';
+              };
+
+              choiceWrap.appendChild(btn1);choiceWrap.appendChild(btn2);
+              logoWrap.appendChild(choiceWrap);
+              requestAnimationFrame(function(){choiceWrap.style.opacity='1';});
+
+              /* Footer */
+              setTimeout(function(){
+                var foot=document.createElement('div');foot.style.cssText='text-align:center;margin-top:1.5rem;font-family:IBM Plex Mono,monospace;font-size:0.52rem;color:#5a5548;opacity:0;transition:opacity 1s ease;';
+                foot.innerHTML='NaiBOR is not real. Everything it describes is.<br>readrichtext.substack.com';
+                logoWrap.appendChild(foot);
+                requestAnimationFrame(function(){foot.style.opacity='1';});
+              },1500);
+            },5000);
+          }
+        },80);
+      },2000);
+    },3000);
+  });
+
+  /* Start */
+  next();
+}
+/* ── TRIGGER (with body filter FIX) ── */
+function triggerManifesto(fromCamera){
+  if(manifestoFired)return;manifestoFired=true;
+  var overlay=document.getElementById('manifestoOverlay'),inner=document.getElementById('manifestoInner');
+  if(!overlay)return;
+  if(fromCamera){
+    var h1=document.getElementById('hudLine1'),h2=document.getElementById('hudLine2'),h3=document.getElementById('hudLine3');
+    var status=document.getElementById('statusText'),dot=document.getElementById('statusDot');
+    var matchName=champions[Math.floor(Math.random()*champions.length)].name;var matchPct=72+Math.floor(Math.random()*19);
+    if(h1){h1.textContent='\u{1F6A8} MATCH FOUND';h1.style.color='#ff6b6b';}
+    if(h2){h2.textContent='SUBJECT MATCHES DATABASE \u2014 '+matchPct+'% CONFIDENCE';h2.style.color='#ffffff';}
+    if(h3){h3.textContent='SCAN 3/3 | RECLASSIFYING...';h3.style.color='#ff6b6b';}
+    if(status){status.textContent='\u{1F6A8} MATCH DETECTED \u2014 '+matchPct+'%';status.style.color='#ff6b6b';}
+    if(dot){dot.style.background='#ff6b6b';}
+    setTimeout(function(){
+      if(h1)h1.textContent='\u{1F6A8} SUBJECT: YOU';
+      if(h2)h2.textContent='RECLASSIFYING... CONFIDENCE: 99.7%';
+      if(h3)h3.textContent='YOU HAVE BEEN SCANNED. YOU HAVE BEEN LOGGED.';
+      if(status)status.textContent='\u{1F6A8} YOU ARE IN THE DATABASE NOW.';
+    },1000);
+    setTimeout(function(){
+      var video=document.getElementById('camVideo');
+      if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
+      var camOv=document.getElementById('camOverlay');if(camOv)camOv.classList.remove('active');
+      overlay.style.display='flex';
+      document.body.style.filter='';
+      document.body.style.overflow='hidden';
+      /* Cursor appears immediately, text begins after brief beat */
+      inner.innerHTML='';
+      runManifesto(inner);
+    },1800);
+  }else{
+    document.body.style.transition='filter 1.5s ease';
+    document.body.style.filter='saturate(0.2) brightness(0.3)';
+    document.querySelectorAll('.float').forEach(function(f){f.style.transition='opacity 1s';f.style.opacity='0';});
+    setTimeout(function(){
+      overlay.style.display='flex';
+      document.body.style.filter='';
+      document.body.style.overflow='hidden';
+      /* Cursor appears immediately, text begins after brief beat */
+      inner.innerHTML='';
+      runManifesto(inner);
+    },1800);
+  }
+}
+
+/* Scroll fallback: scroll past tips + 15 seconds */
+(function(){var pageStart=Date.now();window.addEventListener('scroll',function(){if(manifestoFired)return;var tips=document.querySelector('#tips');if(!tips)return;var rect=tips.getBoundingClientRect();if(rect.top<window.innerHeight&&(Date.now()-pageStart)/1000>15){triggerManifesto(false);}});})();
+
+/* Camera timeout */
+var camOpenTime=null;
+(function(){var checkCamIv=setInterval(function(){if(camOpenTime&&!manifestoFired&&(Date.now()-camOpenTime)/1000>10){clearInterval(checkCamIv);triggerManifesto(true);}},1000);})();
+
+/* ── LOCATION GLITCH ENGINE ── */
+(function(){
+  var locPool=['Midtown','Germantown','East Nashville','Donelson','Hermitage','Sylvan Park','Belmont','12South','The Gulch','Inglewood','Madison','Berry Hill','Green Hills','Antioch','North Nashville','Woodbine','Bordeaux','Salemtown','Wedgewood-Houston','Sobro'];
+  var streetPool=['Broadway near 5th Ave','Gallatin Pike near Eastland','Nolensville Pike southbound','West End Ave','Demonbreun St','Charlotte Ave near 46th','Rosa Parks Blvd','Korean Veterans Blvd','Shelby Ave','Dickerson Pike','Murfreesboro Pike','8th Ave S','Church St near 5th','BNA long-term parking','Pinnacle Tower garage','Metro Courthouse','Ellington Pkwy','Clarksville Pike','Lebanon Pike','James Robertson Pkwy'];
+  var gChars='ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz\u2588\u2591\u2592\u2593';
+  function scramble(len){var s='';for(var i=0;i<len;i++)s+=gChars[Math.floor(Math.random()*gChars.length)];return s;}
+  function pick(pool){return pool[Math.floor(Math.random()*pool.length)];}
+
+  function cycleElement(el){
+    var pool=(el.textContent.length<15)?locPool:streetPool;
+    /* scramble → new location → hold → scramble → new location → hold → repeat */
+    function doSwap(){
+      var len=el.textContent.length||8;
+      el.classList.add('scrambling');
+      el.textContent=scramble(len);
+      setTimeout(function(){
+        el.classList.remove('scrambling');
+        el.textContent=pick(pool);
+        /* schedule next swap */
+        setTimeout(doSwap,3000+Math.random()*4000);
+      },100+Math.random()*80);
+    }
+    /* Start each element at a random offset so they don't all fire at once */
+    setTimeout(doSwap,500+Math.random()*4000);
+  }
+
+  /* Initialize all existing .loc-glitch elements */
+  function initAll(){
+    var els=document.querySelectorAll('.loc-glitch:not([data-lg-init])');
+    for(var i=0;i<els.length;i++){
+      els[i].setAttribute('data-lg-init','1');
+      cycleElement(els[i]);
+    }
+  }
+  initAll();
+  /* Periodically check for new dynamic elements (feed entries) */
+  setInterval(initAll,3000);
+})();
+
+/* ── MAP DOT NAME GLITCH ── */
+(function(){
+  var gChars='ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz\u2588\u2591\u2592\u2593';
+  function scrambleName(name){
+    var arr=name.split('');for(var i=0;i<arr.length;i++){if(Math.random()>0.35)arr[i]=gChars[Math.floor(Math.random()*gChars.length)];}return arr.join('');
+  }
+  setInterval(function(){
+    if(!mapDots.length)return;
+    var count=1+Math.floor(Math.random()*2);
+    for(var c=0;c<count;c++){
+      var d=mapDots[Math.floor(Math.random()*mapDots.length)];
+      var orig=d.name;
+      d.name=scrambleName(orig);
+      (function(dot,origN){
+        setTimeout(function(){
+          var other=mapDots[Math.floor(Math.random()*mapDots.length)];
+          dot.name=other.name;
+          setTimeout(function(){
+            dot.name=scrambleName(origN);
+            setTimeout(function(){
+              var other2=mapDots[Math.floor(Math.random()*mapDots.length)];
+              dot.name=other2.name;
+            },100);
+          },1500+Math.random()*1500);
+        },100);
+      })(d,orig);
+    }
+  },3000+Math.random()*2000);
+})();
+</script>
+</body>
+</html>
