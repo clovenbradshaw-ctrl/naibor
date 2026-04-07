@@ -2981,11 +2981,7 @@ function triggerManifesto(fromCamera){
   var overlay=document.getElementById('manifestoOverlay'),inner=document.getElementById('manifestoInner');
   if(!overlay)return;
   if(fromCamera){
-    /* Kill camera immediately — no flash back to feed */
-    var video=document.getElementById('camVideo');
-    if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
-    var camOv=document.getElementById('camOverlay');if(camOv)camOv.classList.remove('active');
-    /* Hard cut to manifesto */
+    /* Camera already killed in showGlitchPrompt — just launch manifesto */
     overlay.style.display='flex';
     document.body.style.filter='';
     document.body.style.overflow='hidden';
@@ -3020,6 +3016,13 @@ function showGlitchPrompt(fromCamera){
   document.body.appendChild(glitchOverlay);
   requestAnimationFrame(function(){glitchOverlay.style.opacity='1';});
 
+  /* Kill camera immediately — don't leave it running behind the overlay */
+  if(fromCamera){
+    var vid=document.getElementById('camVideo');
+    if(vid&&vid.srcObject){vid.srcObject.getTracks().forEach(function(t){t.stop();});vid.srcObject=null;}
+    var camOv=document.getElementById('camOverlay');if(camOv)camOv.classList.remove('active');
+  }
+
   /* Phase 2: glitch text effect while "freezing" */
   var glitchText=document.createElement('div');
   glitchText.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.82rem;color:#00ff41;text-align:center;line-height:2.2;max-width:400px;padding:0 1.5rem;text-shadow:0 0 4px rgba(0,255,65,0.3);';
@@ -3052,24 +3055,21 @@ function showGlitchPrompt(fromCamera){
       glitchText.appendChild(msg1);
 
       var msg2=document.createElement('div');
-      msg2.style.cssText='font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:400;color:#f5f0eb90;line-height:1.5;margin-top:1rem;opacity:0;transition:opacity 1s;';
+      msg2.style.cssText='font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:400;color:#f5f0eb90;line-height:1.5;margin-top:1rem;opacity:0;transition:opacity 0.6s;';
       msg2.textContent='So is everyone you just scanned.';
       glitchText.appendChild(msg2);
 
       glitchText.style.opacity='0';
-      glitchText.style.transition='opacity 0.8s';
+      glitchText.style.transition='opacity 0.5s';
       requestAnimationFrame(function(){glitchText.style.opacity='1';});
 
-      /* Beat 1: first line lands, let it sit */
-      setTimeout(function(){
-        /* Beat 2: second line fades in */
-        msg2.style.opacity='1';
-      },1400);
+      /* Beat 1: second line punches in fast */
+      setTimeout(function(){ msg2.style.opacity='1'; },800);
 
-      /* Beat 3: hard cut to manifesto */
+      /* Beat 2: hard cut to manifesto */
       setTimeout(function(){
         glitchOverlay.remove();triggerManifesto(true);
-      },3200);
+      },2000);
       return;
     }
 
