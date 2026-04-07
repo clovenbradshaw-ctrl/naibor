@@ -1288,6 +1288,10 @@
   .mf-code{color:#c8c0b0;font-size:0.68rem;}
   .mf-cursor{display:inline-block;width:0.52em;height:1em;background:#c8c0b0;vertical-align:text-bottom;animation:mBlink 0.6s step-end infinite;margin-left:1px;}
   @keyframes mBlink{0%,100%{opacity:1;}50%{opacity:0;}}
+  #manifestoPauseHint{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:100002;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#c8c0b080;letter-spacing:0.1em;pointer-events:none;transition:opacity 0.3s;}
+  #manifestoPauseBadge{position:fixed;top:1.5rem;right:1.5rem;z-index:100002;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#FF6B6B;letter-spacing:0.15em;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+  #manifestoOverlay.mf-paused #manifestoPauseBadge{opacity:1;}
+  #manifestoOverlay.mf-paused .mf-cursor{animation:none;opacity:0.3;}
   /* ── RESPONSIVE — MOBILE FIRST ── */
 
   /* ── Small phones (up to 480px) ── */
@@ -2054,8 +2058,10 @@
 </div>
 
 <!-- MANIFESTO OVERLAY -->
-<div id="manifestoOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a08;z-index:100000;justify-content:center;align-items:center;">
+<div id="manifestoOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a08;z-index:100000;justify-content:center;align-items:center;cursor:pointer;">
   <div id="manifestoInner" style="max-width:680px;width:96%;max-height:100vh;overflow-y:auto;padding:2.5rem 1rem 4rem;scrollbar-width:none;-ms-overflow-style:none;"></div>
+  <div id="manifestoPauseHint">CLICK TO PAUSE</div>
+  <div id="manifestoPauseBadge">▌▌ PAUSED — SCROLL FREELY — CLICK TO RESUME</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -2578,57 +2584,114 @@ var manifestoFired=false;
 function runManifesto(container){
   var steps=[],cursor=null,SPEED=20;
   var userScrolled=false,scrollTimer=null;
+  var mPaused=false,mPendingNext=null,mActiveIntervals=[],mActiveTimeouts=[];
+  var overlay=document.getElementById('manifestoOverlay');
+  var pauseHint=document.getElementById('manifestoPauseHint');
+  var pauseBadge=document.getElementById('manifestoPauseBadge');
+
+  /* ── Click to pause / resume ── */
+  overlay.addEventListener('click',function(e){
+    if(e.target.tagName==='A'||e.target.tagName==='BUTTON'||e.target.closest('button')||e.target.closest('a'))return;
+    mPaused=!mPaused;
+    if(mPaused){
+      overlay.classList.add('mf-paused');
+      if(pauseHint)pauseHint.style.opacity='0';
+      /* Freeze all active intervals */
+      mActiveIntervals.forEach(function(id){clearInterval(id);});
+      mActiveTimeouts.forEach(function(id){clearTimeout(id);});
+      mActiveIntervals=[];mActiveTimeouts=[];
+      userScrolled=true; /* free scrolling while paused */
+    }else{
+      overlay.classList.remove('mf-paused');
+      userScrolled=false;
+      /* Resume: re-trigger next step */
+      if(mPendingNext){var fn=mPendingNext;mPendingNext=null;fn();}
+    }
+  });
+
+  /* Fade out the hint after 3s */
+  setTimeout(function(){if(pauseHint)pauseHint.style.opacity='0';},3000);
+
   container.addEventListener('scroll',function(){
-    /* If user scrolls up (not at bottom), pause auto-scroll */
     var atBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
-    if(!atBottom){userScrolled=true;clearTimeout(scrollTimer);scrollTimer=setTimeout(function(){userScrolled=false;},4000);}
-    else{userScrolled=false;}
+    if(!atBottom){userScrolled=true;clearTimeout(scrollTimer);scrollTimer=setTimeout(function(){if(!mPaused)userScrolled=false;},4000);}
+    else if(!mPaused){userScrolled=false;}
   },{passive:true});
-  /* Also resume auto-scroll on touch end / mouseup near bottom */
   container.addEventListener('touchend',function(){
     var atBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
-    if(atBottom){userScrolled=false;}
+    if(atBottom&&!mPaused){userScrolled=false;}
   },{passive:true});
   function q(fn){steps.push(fn);}
-  function next(){if(steps.length){var s=steps.shift();s(next);}};
+  function next(){
+    if(mPaused){mPendingNext=next;return;}
+    if(steps.length){var s=steps.shift();s(next);}
+  };
   function mkCursor(){if(cursor)cursor.remove();cursor=document.createElement('span');cursor.className='mf-cursor';return cursor;}
   function scroll(){if(!userScrolled)container.scrollTop=container.scrollHeight;}
   function addLine(cls){var el=document.createElement('div');el.className='mf-line'+(cls?' '+cls:'');container.appendChild(el);return el;}
   function addSpacer(){var sp=document.createElement('div');sp.className='mf-line mf-spacer';container.appendChild(sp);scroll();}
 
+  function trackInterval(id){mActiveIntervals.push(id);return id;}
+  function trackTimeout(id){mActiveTimeouts.push(id);return id;}
+
   function typeLine(text,opts,cb){
     opts=opts||{};var el=addLine(opts.cls);var speed=opts.speed||SPEED;var i=0;
     el.textContent='';el.appendChild(mkCursor());
-    var iv=setInterval(function(){
+    var iv=trackInterval(setInterval(function(){
+      if(mPaused){clearInterval(iv);mPendingNext=function(){typeLine_resume(text,el,speed,i,cb);};return;}
       if(i<text.length){cursor.remove();el.textContent=text.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
       else{clearInterval(iv);if(cb)cb(el);}
-    },speed);
+    },speed));
+  }
+  function typeLine_resume(text,el,speed,startI,cb){
+    var i=startI;
+    var iv=trackInterval(setInterval(function(){
+      if(mPaused){clearInterval(iv);mPendingNext=function(){typeLine_resume(text,el,speed,i,cb);};return;}
+      if(i<text.length){if(cursor)cursor.remove();el.textContent=text.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
+      else{clearInterval(iv);if(cb)cb(el);}
+    },speed));
   }
 
   function typeOnto(el,addText,speed,cb){
     if(cursor)cursor.remove();var base=el.textContent;var i=0;
-    var iv=setInterval(function(){
+    var iv=trackInterval(setInterval(function(){
+      if(mPaused){clearInterval(iv);mPendingNext=function(){typeOnto_resume(el,base,addText,speed||SPEED,i,cb);};return;}
       if(i<addText.length){if(cursor)cursor.remove();el.textContent=base+addText.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
       else{clearInterval(iv);if(cb)cb();}
-    },speed||SPEED);
+    },speed||SPEED));
+  }
+  function typeOnto_resume(el,base,addText,speed,startI,cb){
+    var i=startI;
+    var iv=trackInterval(setInterval(function(){
+      if(mPaused){clearInterval(iv);mPendingNext=function(){typeOnto_resume(el,base,addText,speed,i,cb);};return;}
+      if(i<addText.length){if(cursor)cursor.remove();el.textContent=base+addText.substring(0,i+1);el.appendChild(mkCursor());i++;scroll();}
+      else{clearInterval(iv);if(cb)cb();}
+    },speed));
   }
 
   function backspaceTo(el,targetLen,speed,cb){
     if(cursor)cursor.remove();
-    var iv=setInterval(function(){
+    var iv=trackInterval(setInterval(function(){
+      if(mPaused){clearInterval(iv);mPendingNext=function(){backspaceTo(el,targetLen,speed,cb);};return;}
       var t=el.textContent;if(t.length>targetLen){el.textContent=t.substring(0,t.length-1);el.appendChild(mkCursor());scroll();}
       else{clearInterval(iv);if(cb)cb();}
-    },speed||40);
+    },speed||40));
   }
 
-  function pause(ms){return function(cb){setTimeout(cb,ms);};}
+  function pause(ms){return function(cb){
+    if(mPaused){mPendingNext=function(){pause(ms)(cb);};return;}
+    trackTimeout(setTimeout(function(){
+      if(mPaused){mPendingNext=cb;return;}
+      cb();
+    },ms));
+  };}
   function spacer(){return function(cb){addSpacer();cb();};}
 
   function line(text,opts){
     return function(cb){typeLine(text,opts,function(){cb();});};
   }
   function lineP(text,opts,ms){
-    return function(cb){typeLine(text,opts,function(){setTimeout(cb,ms);});};
+    return function(cb){typeLine(text,opts,function(){trackTimeout(setTimeout(function(){if(mPaused){mPendingNext=cb;return;}cb();},ms));});};
   }
 
   /* ═══ PHASE 1: THE DIAGNOSIS ═══ */
