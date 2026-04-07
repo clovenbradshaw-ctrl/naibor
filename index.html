@@ -3057,22 +3057,35 @@ function showGlitchPrompt(fromCamera){
     if(fromCamera){
       var sysLine=document.createElement('div');
       sysLine.style.cssText='font-family:IBM Plex Mono,monospace;font-size:0.68rem;color:#00ff4160;margin-bottom:2rem;letter-spacing:0.1em;text-transform:uppercase;';
-      sysLine.textContent='WAKE UP';
+      sysLine.textContent='SCAN COMPLETE';
       glitchText.appendChild(sysLine);
 
-      var msg=document.createElement('div');
-      msg.style.cssText='font-family:Poppins,sans-serif;font-size:1.3rem;font-weight:700;color:#f5f0eb;line-height:1.5;';
-      msg.innerHTML='You just scanned a real person.<br>Now see what that <span style="color:#51e4a8;">really</span> means.';
-      glitchText.appendChild(msg);
+      var msg1=document.createElement('div');
+      msg1.style.cssText='font-family:Poppins,sans-serif;font-size:1.3rem;font-weight:700;color:#f5f0eb;line-height:1.5;';
+      msg1.textContent='You\u2019re in the database now.';
+      glitchText.appendChild(msg1);
+
+      var msg2=document.createElement('div');
+      msg2.style.cssText='font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:400;color:#f5f0eb90;line-height:1.5;margin-top:1rem;opacity:0;transition:opacity 1s;';
+      msg2.textContent='So is everyone you just scanned.';
+      glitchText.appendChild(msg2);
 
       glitchText.style.opacity='0';
       glitchText.style.transition='opacity 0.8s';
       requestAnimationFrame(function(){glitchText.style.opacity='1';});
 
+      /* Beat 1: first line lands, let it sit */
       setTimeout(function(){
+        /* Beat 2: second line fades in */
+        msg2.style.opacity='1';
+      },1400);
+
+      /* Beat 3: hold, then fade to manifesto */
+      setTimeout(function(){
+        glitchOverlay.style.transition='opacity 1s';
         glitchOverlay.style.opacity='0';
-        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},300);
-      },800);
+        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},1000);
+      },4000);
       return;
     }
 
