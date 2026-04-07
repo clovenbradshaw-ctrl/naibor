@@ -1276,11 +1276,8 @@
   }
 
   /* ── RABBIT EASTER EGG ── */
-  #rabbitContainer{position:fixed;bottom:0;left:0;z-index:99999;pointer-events:none;width:100vw;height:100vh;}
-  #rabbitCanvas{position:absolute;bottom:0;left:0;pointer-events:auto;cursor:default;}
+  #rabbitCanvas{position:fixed;bottom:0;left:0;z-index:99999;pointer-events:auto;cursor:default;}
   #rabbitDarkOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99998;display:none;opacity:0;transition:opacity 0.8s;}
-  #rabbitHoleCanvas{position:fixed;z-index:100001;display:none;cursor:pointer;pointer-events:auto;}
-
   /* ── MANIFESTO OVERLAY ── */
   #manifestoOverlay::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);pointer-events:none;z-index:1;}
   #manifestoOverlay::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.55) 100%);pointer-events:none;z-index:2;}
@@ -2061,11 +2058,8 @@
 </div>
 
 <!-- RABBIT EASTER EGG -->
-<div id="rabbitContainer">
-  <canvas id="rabbitCanvas" width="80" height="80"></canvas>
-</div>
+<canvas id="rabbitCanvas"></canvas>
 <div id="rabbitDarkOverlay"></div>
-<canvas id="rabbitHoleCanvas" width="200" height="120"></canvas>
 
 <!-- MANIFESTO OVERLAY -->
 <div id="manifestoOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a0a08;z-index:100000;justify-content:center;align-items:center;cursor:pointer;">
@@ -3282,180 +3276,200 @@ var camOpenTime=null;
   var rabbitCanvas=document.getElementById('rabbitCanvas');
   var rCtx=rabbitCanvas.getContext('2d');
   var darkOverlay=document.getElementById('rabbitDarkOverlay');
-  var holeCanvas=document.getElementById('rabbitHoleCanvas');
-  var hCtx=holeCanvas.getContext('2d');
-  var container=document.getElementById('rabbitContainer');
 
-  /* Rabbit state */
-  var RABBIT_W=40,RABBIT_H=50;
-  var rState='hidden'; /* hidden, entering, idle, exiting, gone, holdStart, darkening, growing, hopping, hole, glitchBack */
-  var rX=-RABBIT_W, rY=0;
-  var rTargetX=25;
-  var rFrame=0, rTimer=0, rHopPhase=0;
-  var rScale=1;
-  var holdStart=0;
-  var idleTimer=0;
-  var scheduleTimer=null;
-  var earWiggle=0;
-  var holeVisible=false, holeTimer=0;
-  var growPhase=0;
-  /* For the big hop off */
-  var bigHopX=0,bigHopY=0,bigHopVelX=0,bigHopVelY=0;
-  var holeX=0,holeY=0;
+  /* ── Silhouette image + mask ── */
+  var SIL_SRC='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCADUAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD06iiigAooooAKKKKACiiigAooooAKK5/xf4ptvDWnh2Alu5ciGHPX3PsK878O+O9bl8T2v268MttcyiN4toCqGOBj0xmgD2SigdKq6lqVnpVm93f3CQwp1Zj1PoB3PsKALVFeV6t8Vbg3O3R7KJYVP37jJZ/wBGP1r0Lw9qq61olrqKJs85Msuc7WBwR+YNAGlRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABTJZEhheWRgqIpZiewHJNPrnfH90bTwZqLqcM6CIf8CYKf0JoA8Z8S6zNr2t3F/KTtY4iU/wIOg/z3JqlYSeVf28o/glVvyIqvWx4X0pdU1UfaG8uztlM91IeixryfxPSgD2zxH4is/DumG7ujudsiGIH5pG9PYeprxDX9fv/ABBfG5vpcoP9XEvCRj0A/r1p/ijXZvEGsSXc+VhHyQR55RB0H17mserAXufw2jaHwVY7cjdvcfXca8Mr6H8MWhtPDmnWzDDR26Bvriui+J9BFAH/2Q==';
+  var silImg=new Image();
+  var silMaskC=document.createElement('canvas');
+  var silMaskCtx=silMaskC.getContext('2d');
+  var silMaskData=null,silMW=0,silMH=0;
 
-  function drawRabbit(ctx,x,y,scale,hop){
+  /* Notation chars for rain */
+  var NOTATION=[
+    'NUL(\u2205)','SIG(\u25CB)','INS(\u25CF)','SEG(\uFF5C)','CON(\u292B)','SYN(\u25B3)','DEF(\u22A2)','EVA(\u22A8)','REC(\u229B)',
+    '\u03C3\u03B7\u03BC\u03B5\u1FD6\u03BF\u03BD','\u1F10\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE',
+    '\u0932\u0915\u094D\u0937\u0923\u092E\u094D','\u0905\u0919\u094D\u0915\u0928\u092E\u094D',
+    'signum','inscriptio','coniunctio',
+    '\u22A2(n\u012Bti)','\u22A8(viphala)','\u229B(\u0101dh\u0101ra)',
+    '_schema','target','operand',
+    '\u03B1=0','\u03B7=\u22121','\u03A9=2','\u221A2',
+    '\u25CF\u00B2','\u229B(sui)'
+  ];
+  var FS=8; /* font size for rain in small mode */
+
+  /* Rain columns (shared, rebuilt per render size) */
+  var rainCols=[];
+  function buildRain(w,h,fs){
+    var n=Math.ceil(w/fs)+2;
+    rainCols=[];
+    for(var i=0;i<n;i++){
+      var seq='';
+      while(seq.length<Math.floor(h/fs)+40){
+        seq+=NOTATION[Math.floor(Math.random()*NOTATION.length)]+' ';
+      }
+      var chars=[];
+      for(var j=0;j<seq.length;j++){
+        chars.push({c:seq[j],b:0.15+Math.random()*0.85});
+      }
+      rainCols.push({x:i*fs,chars:chars,speed:0.4+Math.random()*1.8,offset:Math.random()*h*2});
+    }
+  }
+
+  function buildMask(targetH){
+    var aspect=silImg.naturalWidth/silImg.naturalHeight;
+    silMH=targetH;
+    silMW=Math.floor(targetH*aspect);
+    silMaskC.width=silMW;
+    silMaskC.height=silMH;
+    silMaskCtx.drawImage(silImg,0,0,silMW,silMH);
+    silMaskData=silMaskCtx.getImageData(0,0,silMW,silMH).data;
+  }
+
+  function isInMask(px,py){
+    if(!silMaskData)return false;
+    var ix=Math.floor(px),iy=Math.floor(py);
+    if(ix<0||ix>=silMW||iy<0||iy>=silMH)return false;
+    var idx=(iy*silMW+ix)*4;
+    return(silMaskData[idx]+silMaskData[idx+1]+silMaskData[idx+2])/3<100;
+  }
+
+  /* Render the silhouette filled with rain at given position/size on a ctx */
+  var rainTime=0;
+  function renderSilhouette(ctx,ox,oy,h,alpha,dt){
+    if(!silMaskData)return;
+    var fs=Math.max(4,Math.round(h/18));
+    /* Rebuild rain if size changed significantly */
+    if(Math.abs(fs-FS)>1||rainCols.length===0){FS=fs;buildRain(silMW,silMH,FS);}
+    rainTime+=dt;
+    /* Advance rain */
+    for(var i=0;i<rainCols.length;i++){
+      var col=rainCols[i];
+      col.offset+=col.speed;
+      if(col.offset>silMH+FS*10)col.offset-=silMH+FS*15;
+      for(var k=0;k<col.chars.length;k++){
+        if(Math.random()<0.003){
+          var s=NOTATION[Math.floor(Math.random()*NOTATION.length)];
+          col.chars[k].c=s[Math.floor(Math.random()*s.length)];
+          col.chars[k].b=0.15+Math.random()*0.85;
+        }
+      }
+    }
+    /* Eye position */
+    var eyeX=silMW*0.42,eyeY=silMH*0.17,eyeR=silMW*0.025;
     ctx.save();
-    ctx.translate(x,y);
-    ctx.scale(scale,scale);
-    /* hop bounce */
-    var bounce=hop?Math.abs(Math.sin(hop*Math.PI))*-12:0;
-    ctx.translate(0,bounce);
-
-    /* Body — small oval */
-    ctx.fillStyle='#d4d0cc';
-    ctx.beginPath();
-    ctx.ellipse(0,0,10,12,0,0,Math.PI*2);
-    ctx.fill();
-
-    /* Head */
-    ctx.fillStyle='#ddd8d3';
-    ctx.beginPath();
-    ctx.ellipse(0,-18,8,9,0,0,Math.PI*2);
-    ctx.fill();
-
-    /* Left ear */
-    ctx.save();
-    ctx.rotate(-0.15+Math.sin(earWiggle)*0.08);
-    ctx.fillStyle='#d4d0cc';
-    ctx.beginPath();
-    ctx.ellipse(-3,-33,3,10,0.1,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#c4a9a0';
-    ctx.beginPath();
-    ctx.ellipse(-3,-33,1.5,7,0.1,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    /* Right ear */
-    ctx.save();
-    ctx.rotate(0.1+Math.sin(earWiggle+1)*0.06);
-    ctx.fillStyle='#d4d0cc';
-    ctx.beginPath();
-    ctx.ellipse(3,-33,3,10,-0.1,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#c4a9a0';
-    ctx.beginPath();
-    ctx.ellipse(3,-33,1.5,7,-0.1,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    /* Eyes — tiny dots */
-    ctx.fillStyle='#333';
-    ctx.beginPath();
-    ctx.arc(-3,-19,1.2,0,Math.PI*2);
-    ctx.arc(3,-19,1.2,0,Math.PI*2);
-    ctx.fill();
-
-    /* Nose */
-    ctx.fillStyle='#c4a9a0';
-    ctx.beginPath();
-    ctx.arc(0,-15,1.5,0,Math.PI*2);
-    ctx.fill();
-
-    /* Tail — small circle */
-    ctx.fillStyle='#eee';
-    ctx.beginPath();
-    ctx.arc(-8,8,4,0,Math.PI*2);
-    ctx.fill();
-
-    /* Feet */
-    ctx.fillStyle='#ccc8c3';
-    ctx.beginPath();
-    ctx.ellipse(-5,12,4,2.5,0,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(5,12,4,2.5,0,0,Math.PI*2);
-    ctx.fill();
-
+    ctx.globalAlpha=alpha;
+    ctx.font=FS+'px monospace';
+    for(var i=0;i<rainCols.length;i++){
+      var col=rainCols[i];
+      for(var j=0;j<col.chars.length;j++){
+        var sy=(j*FS+col.offset)%(silMH+FS*10)-FS*5;
+        var sx=col.x;
+        if(!isInMask(sx,sy))continue;
+        /* Skip eye area */
+        var edx=sx-eyeX,edy=sy-eyeY;
+        if(edx*edx/(eyeR*eyeR)+edy*edy/(eyeR*eyeR)<1)continue;
+        var ch2=col.chars[j];
+        if(ch2.c===' ')continue;
+        var isHead=j===Math.floor((col.offset/FS)%col.chars.length);
+        var a=isHead?Math.min(1,ch2.b*2):ch2.b*0.5;
+        ctx.fillStyle='rgba(255,255,255,'+a+')';
+        ctx.fillText(ch2.c,ox+sx,oy+sy);
+      }
+    }
+    /* Subtle glow */
+    ctx.globalAlpha=alpha*0.04;
+    ctx.filter='blur(8px)';
+    ctx.fillStyle='#fff';
+    ctx.fillRect(ox,oy,silMW,silMH);
+    ctx.filter='none';
     ctx.restore();
   }
 
-  function drawHole(cx,cy,w,h){
-    hCtx.clearRect(0,0,holeCanvas.width,holeCanvas.height);
-    hCtx.save();
-    hCtx.fillStyle='#111';
-    hCtx.beginPath();
-    hCtx.ellipse(w/2,h/2,w/2,h/2,0,0,Math.PI*2);
-    hCtx.fill();
-    /* Dark rim */
-    hCtx.strokeStyle='#333';
-    hCtx.lineWidth=2;
-    hCtx.beginPath();
-    hCtx.ellipse(w/2,h/2,w/2,h/2,0,0,Math.PI*2);
-    hCtx.stroke();
-    /* Some dirt specs */
-    hCtx.fillStyle='#2a2a2a';
-    for(var i=0;i<6;i++){
-      var angle=Math.random()*Math.PI*2;
-      var r=w/2+2+Math.random()*4;
-      hCtx.beginPath();
-      hCtx.arc(w/2+Math.cos(angle)*r,h/2+Math.sin(angle)*r*0.5,1+Math.random()*2,0,Math.PI*2);
-      hCtx.fill();
-    }
-    hCtx.restore();
+  /* ── States ── */
+  var SMALL_H=70; /* small silhouette height in bottom-left */
+  var rState='hidden'; /* hidden, entering, idle, exiting, gone, darkening, big, hopOff, glitchBack */
+  var rX=-80,rTimer=0,rHopPhase=0,idleTimer=0;
+  var rTargetX=8;
+  var mouseDown=false,mouseDownTime=0;
+  var doubleTapLast=0;
+  var bigTimer=0;
+  var bigAlpha=1;
+  var bigY=0,bigVelY=0;
+
+  /* Canvas sizing for small mode */
+  function setSmallCanvas(){
+    buildMask(SMALL_H);
+    rabbitCanvas.width=silMW+20;
+    rabbitCanvas.height=silMH+10;
+    rabbitCanvas.style.width=rabbitCanvas.width+'px';
+    rabbitCanvas.style.height=rabbitCanvas.height+'px';
+    rabbitCanvas.style.position='fixed';
+    rabbitCanvas.style.bottom='0';
+    rabbitCanvas.style.left='0';
+    rabbitCanvas.style.top='';
+    rabbitCanvas.style.zIndex='99999';
+    buildRain(silMW,silMH,FS);
+  }
+
+  /* Canvas sizing for big (fullscreen) mode */
+  function setBigCanvas(){
+    rabbitCanvas.width=window.innerWidth;
+    rabbitCanvas.height=window.innerHeight;
+    rabbitCanvas.style.width=window.innerWidth+'px';
+    rabbitCanvas.style.height=window.innerHeight+'px';
+    rabbitCanvas.style.bottom='';
+    rabbitCanvas.style.left='0';
+    rabbitCanvas.style.top='0';
+    rabbitCanvas.style.zIndex='100001';
   }
 
   function scheduleAppearance(){
-    var delay=8000+Math.random()*15000; /* 8-23 seconds */
-    scheduleTimer=setTimeout(function(){
+    var delay=8000+Math.random()*15000;
+    setTimeout(function(){
       if(manifestoFired)return;
       rState='entering';
-      rX=-RABBIT_W;
-      rTimer=0;
-      rHopPhase=0;
+      rX=-silMW-10;
+      rTimer=0;rHopPhase=0;
+      setSmallCanvas();
     },delay);
   }
 
-  /* Resize rabbit canvas */
-  function resizeRabbitCanvas(){
-    rabbitCanvas.width=120;
-    rabbitCanvas.height=100;
-    rabbitCanvas.style.width='120px';
-    rabbitCanvas.style.height='100px';
-  }
-  resizeRabbitCanvas();
-
-  /* Mouse/touch interaction */
-  var mouseDown=false,mouseDownTime=0;
-  rabbitCanvas.addEventListener('mousedown',function(e){
-    if(rState==='idle'){mouseDown=true;mouseDownTime=Date.now();}
-  });
-  rabbitCanvas.addEventListener('touchstart',function(e){
-    if(rState==='idle'){mouseDown=true;mouseDownTime=Date.now();e.preventDefault();}
-  },{passive:false});
+  /* ── Interaction ── */
+  rabbitCanvas.addEventListener('mousedown',function(e){handleDown(e);});
+  rabbitCanvas.addEventListener('touchstart',function(e){handleDown(e);e.preventDefault();},{passive:false});
   window.addEventListener('mouseup',function(){mouseDown=false;});
   window.addEventListener('touchend',function(){mouseDown=false;});
 
-  holeCanvas.addEventListener('click',function(){
-    if(holeVisible&&rState==='hole'){
-      holeVisible=false;
-      holeCanvas.style.display='none';
-      darkOverlay.style.display='none';
-      resetRabbitCanvas();
-      rState='hidden';
-      triggerManifesto(false);
+  function handleDown(e){
+    if(rState==='idle'){
+      /* Single tap → go to big mode */
+      mouseDown=true;mouseDownTime=Date.now();
+      rState='darkening';
+      rTimer=0;
+      darkOverlay.style.display='block';
+      requestAnimationFrame(function(){darkOverlay.style.opacity='1';});
+    } else if(rState==='big'){
+      /* Check for double-tap */
+      var now=Date.now();
+      if(now-doubleTapLast<400){
+        /* Double-tap → manifesto */
+        doubleTapLast=0;
+        rState='hidden';
+        rCtx.clearRect(0,0,rabbitCanvas.width,rabbitCanvas.height);
+        triggerManifesto(false);
+        setTimeout(function(){
+          darkOverlay.style.display='none';
+          darkOverlay.style.opacity='0';
+          setSmallCanvas();
+        },200);
+        return;
+      }
+      doubleTapLast=now;
     }
-  });
-
-  function glitchBack(){
-    rState='glitchBack';
-    rTimer=0;
-    holeVisible=false;
-    holeCanvas.style.display='none';
   }
 
+  /* ── Glitch effect back to normal ── */
   function doGlitchEffect(){
-    /* Quick glitch flash */
     var flash=document.createElement('div');
     flash.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:100002;pointer-events:none;';
     document.body.appendChild(flash);
@@ -3473,31 +3487,30 @@ var camOpenTime=null;
         setTimeout(function(){
           darkOverlay.style.display='none';
           rState='hidden';
-          resetRabbitCanvas();
+          setSmallCanvas();
           scheduleAppearance();
         },800);
       }
     },60);
   }
 
+  /* ── Main loop ── */
   var lastRaf=performance.now();
   function rabbitLoop(now){
     var dt=(now-lastRaf)/1000;
     if(dt>0.1)dt=0.1;
     lastRaf=now;
-    earWiggle+=dt*2.5;
+
+    if(rState==='hidden'||rState==='gone'){requestAnimationFrame(rabbitLoop);return;}
 
     rCtx.clearRect(0,0,rabbitCanvas.width,rabbitCanvas.height);
 
     switch(rState){
-      case 'hidden':
-        break;
-
       case 'entering':
-        rX+=1.5;
+        rX+=1.2;
         rHopPhase+=dt*3;
-        var hop=rHopPhase%1;
-        drawRabbit(rCtx,rX+RABBIT_W/2,rabbitCanvas.height-RABBIT_H/2-5,1,hop);
+        var bounce=Math.abs(Math.sin(rHopPhase*Math.PI))*8;
+        renderSilhouette(rCtx,rX,rabbitCanvas.height-silMH-bounce,SMALL_H,0.35,dt);
         if(rX>=rTargetX){
           rX=rTargetX;
           rState='idle';
@@ -3507,174 +3520,98 @@ var camOpenTime=null;
 
       case 'idle':
         idleTimer+=dt;
-        /* Subtle breathing/ear wiggle */
-        var idleHop=0;
-        /* Occasional tiny hop */
-        if(Math.sin(idleTimer*0.8)>0.95)idleHop=(Math.sin(idleTimer*0.8)-0.95)*20;
-        drawRabbit(rCtx,rX+RABBIT_W/2,rabbitCanvas.height-RABBIT_H/2-5,1,idleHop>0?idleHop:0);
-
-        /* Check for long press */
-        if(mouseDown&&(Date.now()-mouseDownTime)>2000){
-          mouseDown=false;
-          rState='darkening';
-          rTimer=0;
-          darkOverlay.style.display='block';
-          requestAnimationFrame(function(){darkOverlay.style.opacity='1';});
-        }
-
-        /* Auto-exit after sitting idle too long */
-        if(idleTimer>6&&!mouseDown){
+        var breath=0.3+0.08*Math.sin(idleTimer*1.2);
+        renderSilhouette(rCtx,rX,rabbitCanvas.height-silMH,SMALL_H,breath,dt);
+        /* Auto-exit after 8 seconds if untouched */
+        if(idleTimer>8){
           rState='exiting';
-          rTimer=0;
+          rTimer=0;rHopPhase=0;
         }
         break;
 
       case 'exiting':
-        rX-=2;
+        rX-=1.5;
         rHopPhase+=dt*3;
-        drawRabbit(rCtx,rX+RABBIT_W/2,rabbitCanvas.height-RABBIT_H/2-5,1,rHopPhase%1);
-        if(rX<-RABBIT_W){
+        var bounce2=Math.abs(Math.sin(rHopPhase*Math.PI))*8;
+        renderSilhouette(rCtx,rX,rabbitCanvas.height-silMH-bounce2,SMALL_H,0.3,dt);
+        if(rX<-silMW-10){
           rState='gone';
           scheduleAppearance();
         }
         break;
 
-      case 'gone':
-        break;
-
       case 'darkening':
         rTimer+=dt;
-        /* Still draw rabbit in corner during darkening */
-        drawRabbit(rCtx,rX+RABBIT_W/2,rabbitCanvas.height-RABBIT_H/2-5,1,0);
-        if(rTimer>1){
+        /* Still render small while darkening */
+        renderSilhouette(rCtx,rX,rabbitCanvas.height-silMH,SMALL_H,0.4,dt);
+        if(rTimer>0.8){
+          /* Switch to big canvas */
           rState='growing';
           rTimer=0;
-          rScale=1;
-          /* Move rabbit canvas to center of screen */
-          container.style.pointerEvents='none';
-          rabbitCanvas.style.position='fixed';
-          rabbitCanvas.style.bottom='auto';
-          rabbitCanvas.style.left='auto';
-          rabbitCanvas.width=window.innerWidth;
-          rabbitCanvas.height=window.innerHeight;
-          rabbitCanvas.style.width=window.innerWidth+'px';
-          rabbitCanvas.style.height=window.innerHeight+'px';
-          rabbitCanvas.style.top='0';
-          rabbitCanvas.style.left='0';
-          rabbitCanvas.style.zIndex='100001';
-          bigHopX=60;
-          bigHopY=window.innerHeight-100;
+          var bigH=Math.floor(window.innerHeight*0.55);
+          buildMask(bigH);
+          buildRain(silMW,silMH,FS);
+          setBigCanvas();
+          bigAlpha=0;
         }
         break;
 
       case 'growing':
         rTimer+=dt;
-        /* Rabbit grows and moves to center */
-        var targetScale=4;
-        var centerX=window.innerWidth/2;
-        var centerY=window.innerHeight/2;
-        var t=Math.min(rTimer/1.5,1);
+        var t=Math.min(rTimer/1.2,1);
         t=t*t*(3-2*t); /* smoothstep */
-        rScale=1+t*(targetScale-1);
-        bigHopX=60+t*(centerX-60);
-        bigHopY=(window.innerHeight-100)+t*(centerY+30-(window.innerHeight-100));
-        drawRabbit(rCtx,bigHopX,bigHopY,rScale,0);
-        if(rTimer>1.8){
-          rState='hopping';
-          rTimer=0;
-          bigHopVelX=4;
-          bigHopVelY=-8;
-          /* Position where hole will appear */
-          holeX=centerX-60;
-          holeY=window.innerHeight-80;
+        bigAlpha=t*0.85;
+        var cx=window.innerWidth/2-silMW/2;
+        var cy=window.innerHeight/2-silMH/2;
+        renderSilhouette(rCtx,cx,cy,silMH,bigAlpha,dt);
+        if(rTimer>1.3){
+          rState='big';
+          bigTimer=0;
+          doubleTapLast=0;
         }
         break;
 
-      case 'hopping':
-        rTimer+=dt;
-        /* Rabbit hops toward bottom and disappears into hole */
-        bigHopVelY+=18*dt; /* gravity */
-        bigHopX+=bigHopVelX*dt*60;
-        bigHopY+=bigHopVelY*dt*60;
-        rScale=Math.max(0.5,rScale-dt*1.2);
-        drawRabbit(rCtx,bigHopX,bigHopY,rScale,0);
-        if(bigHopY>window.innerHeight+50||rTimer>2){
-          /* Show the hole */
-          rState='hole';
+      case 'big':
+        bigTimer+=dt;
+        var breath2=0.7+0.15*Math.sin(bigTimer*0.8);
+        var cx2=window.innerWidth/2-silMW/2;
+        var cy2=window.innerHeight/2-silMH/2;
+        renderSilhouette(rCtx,cx2,cy2,silMH,breath2,dt);
+        /* After 4 seconds with no double-tap, hop off */
+        if(bigTimer>4){
+          rState='hopOff';
           rTimer=0;
-          holeVisible=true;
-          holeCanvas.width=140;
-          holeCanvas.height=60;
-          holeCanvas.style.display='block';
-          holeCanvas.style.left=(holeX-70)+'px';
-          holeCanvas.style.top=(holeY-30)+'px';
-          holeCanvas.style.zIndex='100001';
-          drawHole(holeX,holeY,140,60);
+          bigY=cy2;
+          bigVelY=-6;
+        }
+        break;
+
+      case 'hopOff':
+        rTimer+=dt;
+        bigVelY+=15*dt;
+        bigY+=bigVelY*dt*60;
+        var fadeOut=Math.max(0,1-rTimer/1.5);
+        var cx3=window.innerWidth/2-silMW/2;
+        renderSilhouette(rCtx,cx3,bigY,silMH,fadeOut*0.8,dt);
+        if(rTimer>1.5||bigY>window.innerHeight+100){
           rCtx.clearRect(0,0,rabbitCanvas.width,rabbitCanvas.height);
-          /* Start 5 second countdown */
-          setTimeout(function(){
-            if(rState==='hole'&&holeVisible){
-              glitchBack();
-              doGlitchEffect();
-            }
-          },5000);
+          doGlitchEffect();
         }
-        break;
-
-      case 'hole':
-        /* Hole is drawn, waiting for click. Pulse the hole slightly */
-        rTimer+=dt;
-        var pulse=1+Math.sin(rTimer*3)*0.05;
-        hCtx.clearRect(0,0,holeCanvas.width,holeCanvas.height);
-        hCtx.save();
-        hCtx.translate(70,30);
-        hCtx.scale(pulse,pulse);
-        hCtx.fillStyle='#0a0a08';
-        hCtx.beginPath();
-        hCtx.ellipse(0,0,65,25,0,0,Math.PI*2);
-        hCtx.fill();
-        hCtx.strokeStyle='#2a2a2a';
-        hCtx.lineWidth=2;
-        hCtx.beginPath();
-        hCtx.ellipse(0,0,65,25,0,0,Math.PI*2);
-        hCtx.stroke();
-        /* Subtle depth lines */
-        hCtx.strokeStyle='#1a1a1a';
-        hCtx.lineWidth=1;
-        hCtx.beginPath();
-        hCtx.ellipse(0,5,50,18,0,0,Math.PI);
-        hCtx.stroke();
-        hCtx.restore();
-        break;
-
-      case 'glitchBack':
-        /* handled by doGlitchEffect */
         break;
     }
 
     requestAnimationFrame(rabbitLoop);
   }
 
-  function resetRabbitCanvas(){
-    rabbitCanvas.style.position='absolute';
-    rabbitCanvas.style.bottom='0';
-    rabbitCanvas.style.left='0';
-    rabbitCanvas.style.top='auto';
-    rabbitCanvas.style.zIndex='';
-    resizeRabbitCanvas();
-  }
-
-  /* Start the cycle */
-  scheduleAppearance();
-  requestAnimationFrame(rabbitLoop);
-
-  /* Reset after manifesto / glitch back */
-  var origReset=resetRabbitCanvas;
-  window.addEventListener('resize',function(){
-    if(rState==='hidden'||rState==='gone'||rState==='idle'||rState==='entering'||rState==='exiting'){
-      resizeRabbitCanvas();
-    }
-  });
+  /* ── Init: load image then start ── */
+  silImg.onload=function(){
+    buildMask(SMALL_H);
+    buildRain(silMW,silMH,FS);
+    setSmallCanvas();
+    scheduleAppearance();
+    requestAnimationFrame(rabbitLoop);
+  };
+  silImg.src=SIL_SRC;
 })();
 </script>
 </body>
