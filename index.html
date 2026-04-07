@@ -2981,30 +2981,16 @@ function triggerManifesto(fromCamera){
   var overlay=document.getElementById('manifestoOverlay'),inner=document.getElementById('manifestoInner');
   if(!overlay)return;
   if(fromCamera){
-    var h1=document.getElementById('hudLine1'),h2=document.getElementById('hudLine2'),h3=document.getElementById('hudLine3');
-    var status=document.getElementById('statusText'),dot=document.getElementById('statusDot');
-    var matchName=champions[Math.floor(Math.random()*champions.length)].name;var matchPct=72+Math.floor(Math.random()*19);
-    if(h1){h1.textContent='\u{1F6A8} MATCH FOUND';h1.style.color='#ff6b6b';}
-    if(h2){h2.textContent='SUBJECT MATCHES DATABASE \u2014 '+matchPct+'% CONFIDENCE';h2.style.color='#ffffff';}
-    if(h3){h3.textContent='SCAN 3/3 | RECLASSIFYING...';h3.style.color='#ff6b6b';}
-    if(status){status.textContent='\u{1F6A8} MATCH DETECTED \u2014 '+matchPct+'%';status.style.color='#ff6b6b';}
-    if(dot){dot.style.background='#ff6b6b';}
-    setTimeout(function(){
-      if(h1)h1.textContent='\u{1F6A8} SUBJECT: YOU';
-      if(h2)h2.textContent='RECLASSIFYING... CONFIDENCE: 99.7%';
-      if(h3)h3.textContent='YOU HAVE BEEN SCANNED. YOU HAVE BEEN LOGGED.';
-      if(status)status.textContent='\u{1F6A8} YOU ARE IN THE DATABASE NOW.';
-    },400);
-    setTimeout(function(){
-      var video=document.getElementById('camVideo');
-      if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
-      var camOv=document.getElementById('camOverlay');if(camOv)camOv.classList.remove('active');
-      overlay.style.display='flex';
-      document.body.style.filter='';
-      document.body.style.overflow='hidden';
-      inner.innerHTML='';
-      runManifesto(inner);
-    },700);
+    /* Kill camera immediately — no flash back to feed */
+    var video=document.getElementById('camVideo');
+    if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
+    var camOv=document.getElementById('camOverlay');if(camOv)camOv.classList.remove('active');
+    /* Hard cut to manifesto */
+    overlay.style.display='flex';
+    document.body.style.filter='';
+    document.body.style.overflow='hidden';
+    inner.innerHTML='';
+    runManifesto(inner);
   }else{
     document.body.style.transition='filter 1.5s ease';
     document.body.style.filter='saturate(0.2) brightness(0.3)';
@@ -3080,12 +3066,10 @@ function showGlitchPrompt(fromCamera){
         msg2.style.opacity='1';
       },1400);
 
-      /* Beat 3: hold, then fade to manifesto */
+      /* Beat 3: hard cut to manifesto */
       setTimeout(function(){
-        glitchOverlay.style.transition='opacity 1s';
-        glitchOverlay.style.opacity='0';
-        setTimeout(function(){glitchOverlay.remove();triggerManifesto(true);},1000);
-      },4000);
+        glitchOverlay.remove();triggerManifesto(true);
+      },3200);
       return;
     }
 
