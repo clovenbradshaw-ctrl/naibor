@@ -819,6 +819,21 @@
   .map-blur .leaflet-control-zoom { display: none !important; }
   .leaflet-container { background: #1a1a2e !important; }
 
+  @keyframes mapGlitchAnim {
+    0%   { transform: translate(0,0);      filter: none;                                          opacity: 1;    clip-path: none; }
+    8%   { transform: translate(-7px,2px); filter: hue-rotate(90deg) saturate(4) brightness(1.4); opacity: 0.55; clip-path: inset(8% 0 72% 0); }
+    18%  { transform: translate(7px,-4px); filter: hue-rotate(200deg) saturate(0.1) brightness(2); opacity: 0.4;  clip-path: inset(60% 0 8% 0); }
+    28%  { transform: translate(-4px,3px); filter: hue-rotate(320deg) saturate(3);                opacity: 0.7;  clip-path: inset(30% 0 40% 0); }
+    38%  { transform: translate(4px,-2px); filter: hue-rotate(180deg) saturate(2) brightness(0.7); opacity: 0.6;  clip-path: none; }
+    52%  { transform: translate(-2px,1px); filter: hue-rotate(45deg) saturate(1.5);               opacity: 0.85; clip-path: none; }
+    68%  { transform: translate(2px,0);    filter: hue-rotate(15deg);                             opacity: 0.95; clip-path: none; }
+    85%  { transform: translate(-1px,0);   filter: none;                                          opacity: 1;    clip-path: none; }
+    100% { transform: translate(0,0);      filter: none;                                          opacity: 1;    clip-path: none; }
+  }
+  .map-glitching {
+    animation: mapGlitchAnim 0.45s linear forwards;
+  }
+
   .map-overlay-cta {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
@@ -2475,8 +2490,23 @@ var mapTickerMessages=['{name} \u2014 plate scanned on Broadway near 5th Ave','{
 
 function initLeafletMap(){
   try{
-    var m=L.map('leafletMap',{center:[36.1627,-86.7816],zoom:13,zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false,boxZoom:false,keyboard:false,attributionControl:false});
+    var nashvilleAreas=[
+      [36.1627,-86.7816],[36.1800,-86.7400],[36.1850,-86.7900],[36.1300,-86.7950],
+      [36.1500,-86.7940],[36.1630,-86.8280],[36.1750,-86.6750],[36.2550,-86.7350],
+      [36.1100,-86.8200],[36.0600,-86.6750],[36.1950,-86.8050],[36.1420,-86.7600],
+      [36.2100,-86.7100],[36.1050,-86.7400],[36.1700,-86.7200]
+    ];
+    var m=L.map('leafletMap',{center:nashvilleAreas[0],zoom:13,zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false,boxZoom:false,keyboard:false,attributionControl:false});
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(m);
+    function glitchMapView(){
+      var el=document.getElementById('leafletMap');
+      var coord=nashvilleAreas[Math.floor(Math.random()*nashvilleAreas.length)];
+      var zoom=12+Math.floor(Math.random()*3);
+      if(el){el.classList.add('map-glitching');setTimeout(function(){el.classList.remove('map-glitching');},460);}
+      m.setView(coord,zoom,{animate:false});
+      setTimeout(glitchMapView,3000+Math.floor(Math.random()*5000));
+    }
+    setTimeout(glitchMapView,1200+Math.floor(Math.random()*1800));
   }catch(e){/* Leaflet not loaded — solid bg fallback */}
 }
 
