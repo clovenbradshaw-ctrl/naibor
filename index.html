@@ -2497,7 +2497,7 @@ function initLeafletMap(){
       [36.2100,-86.7100],[36.1050,-86.7400],[36.1700,-86.7200]
     ];
     var m=L.map('leafletMap',{center:nashvilleAreas[0],zoom:13,zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false,boxZoom:false,keyboard:false,attributionControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(m);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles &copy; Esri'}).addTo(m);
     function glitchMapView(){
       var el=document.getElementById('leafletMap');
       var coord=nashvilleAreas[Math.floor(Math.random()*nashvilleAreas.length)];
